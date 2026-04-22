@@ -49,9 +49,9 @@ The package supports two pipelines through a single `method` argument:
   trial the participant picks one of two noisy faces.
 - **`"briefrc"`** — the Brief Reverse Correlation pipeline
   (Schmitz et al., 2024). On each trial the participant picks one noisy
-  face out of 6 or 12. CIs are computed by direct noise-matrix
+  face out of 6, 12, or more. CIs are computed by direct noise-matrix
   multiplication rather than by reconstructing sinusoids from a
-  generating `.RData` file (so there is no `.RData` file for briefRC).
+  generating `.RData` file.
 
 You only need to know *your* pipeline to use this package. The checks
 use the right logic automatically once you set `method`.
@@ -74,18 +74,26 @@ R 4.1 or newer.
 - [`cli`](https://cli.r-lib.org/) — used to format console messages
   with colour.
 
-### Optional packages
+### Optional packages (needed only for the infoVal-based checks)
 
-- [`rcicr`](https://github.com/rdotsch/rcicr) — only needed once the
-  CI-generation–dependent checks land (see Section 9). Install from
-  GitHub:
+Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal) delegate
+to the `rcicr` package. If you want to use those three checks, you need:
+
+- [`rcicr`](https://github.com/rdotsch/rcicr) — install from GitHub:
 
     ```r
     remotes::install_github("rdotsch/rcicr")
     ```
 
-- `testthat`, `knitr`, `rmarkdown`, `withr` — only needed to build the
-  package or its vignettes locally.
+- `foreach`, `tibble`, and `dplyr` — `rcicr` uses operators and helpers
+  from these packages at runtime. The package will attach them for you
+  on the first infoVal-dependent call, but they need to be installed:
+
+    ```r
+    install.packages(c("foreach", "tibble", "dplyr"))
+    ```
+
+All the other checks (Sections 6.1–6.8) work without `rcicr`.
 
 ### Installing the package
 
@@ -122,7 +130,7 @@ from a CSV or build in R. At minimum it needs:
 | `participant_id` | Identifier for each participant. Character or integer is fine.      |
 | `stimulus`       | The stimulus number for that trial. Must match the numbering used when the stimuli were generated. |
 | `response`       | The participant's response on that trial. Coding depends on method. |
-| `rt` (optional)  | Response time in milliseconds. Used by future RT checks.            |
+| `rt` (optional)  | Response time in milliseconds. Used by `check_rt()` and `cross_validate_rt_infoval()`. |
 
 If your column names differ, every function accepts overrides via
 `col_participant`, `col_stimulus`, `col_response`, and `col_rt`.
@@ -135,9 +143,11 @@ If your column names differ, every function accepts overrides via
   it's subtracted. If responses are coded `{0, 1}` instead, the "subtract"
   information is lost and the CI comes out close to blank. This is one
   of the most common silent failures in RC data; Section 6.1 detects it.
-- **`"briefrc"`**: `response` may be `{-1, 1}` **or** continuous weights
-  (e.g. one-hot per trial, or aggregated per-stimulus weights). Any
-  finite numeric value is accepted.
+- **`"briefrc"`**: Following Schmitz et al. (2024), each trial is
+  recorded as one row with `stimulus` = id of the chosen noise pattern
+  and `response` = `+1` if the participant picked the oriented version
+  (`base + noise`) or `-1` if the inverted version (`base - noise`).
+  This matches how rcicr's `genCI` adaptation is built.
 
 ### Auxiliary inputs by method
 
@@ -172,7 +182,10 @@ report
 
 That printout is what the package produces for you: one line per check,
 a coloured tag (green `[PASS]`, yellow `[WARN]`, red `[FAIL]`, grey
-`[SKIP]` on colour-capable consoles), and a short explanation.
+`[SKIP]` on colour-capable consoles), and a short explanation. The
+"Skipped checks" list at the bottom tells you which checks didn't run —
+usually because the required input (an RT column, the stimulus `.RData`,
+etc.) wasn't passed to `run_all_checks()`.
 
 ## 5. The result object
 
@@ -206,8 +219,10 @@ summary(report)
 
 ## 6. The checks one by one
 
-Every example below uses synthetic data built inline, so you can run
-the whole tutorial start to finish without any external files.
+Every example below uses synthetic data built inline, so the checks
+from Sections 6.1–6.8 run without any external files. The three infoVal-
+based checks in Sections 6.9–6.11 need `rcicr` and a real `.RData` file,
+so their examples are shown but not executed in this vignette.
 
 ### 6.1. `check_response_coding()`
 
@@ -325,7 +340,94 @@ r <- check_response_bias(with_a_constant_responder)
 r$data$per_participant
 ```
 
-### 6.5. Noise matrix (Brief-RC)
+### 6.5. `check_rt()`
+
+Scans response times for three kinds of pathology:
+
+1. **Implausibly fast responses** (`rt < fast_threshold`, default 200 ms).
+   These almost always mean the participant clicked before processing
+   the stimulus.
+2. **Implausibly slow responses** (`rt > slow_threshold`, default 5000 ms).
+   Often a sign of distraction or a task pause.
+3. **Abnormally low within-participant RT variability**
+   (coefficient of variation below `min_cv`, default 0.10). A nearly
+   constant RT is a hint that the participant is responding mechanically.
+
+The check requires an RT column; pass it via `col_rt`. Status logic:
+more than 15% fast trials for any participant is **fail**; any lesser
+flag is **warn**; otherwise **pass**.
+
+```{r rt}
+set.seed(2)
+df_rt <- data.frame(
+  participant_id = rep(1:3, each = 100),
+  stimulus       = rep(1:100, 3),
+  response       = 1L,
+  rt             = c(
+    exp(rnorm(100, 6.7, 0.4)) + 200,   # normal responder
+    c(rep(150, 30), exp(rnorm(70, 6.7, 0.4)) + 200),  # 30% fast
+    rep(800, 100)                      # constant RT — no variability
+  )
+)
+check_rt(df_rt, col_rt = "rt")
+```
+
+`r$data$per_participant` gives you the per-participant breakdown
+(`pct_fast`, `pct_slow`, `cv_rt`, and the three flag columns) so you
+can exclude participants programmatically.
+
+### 6.6. `check_stimulus_alignment()`
+
+Verifies that every `stimulus` id in your response data refers to a
+valid column/row of the stimulus pool. For 2IFC the pool size is read
+from the `.RData` (`n_trials` field); for Brief-RC it is `ncol()` of
+the noise matrix.
+
+```{r align-pass}
+mat <- matrix(rnorm(16384 * 5, sd = 0.05), nrow = 16384, ncol = 5)
+stim_ok <- data.frame(
+  participant_id = rep(1:2, each = 20),
+  stimulus       = sample.int(5, 40, replace = TRUE),
+  response       = sample(c(-1, 1), 40, replace = TRUE)
+)
+check_stimulus_alignment(stim_ok, method = "briefrc", noise_matrix = mat)
+```
+
+```{r align-fail}
+stim_bad <- data.frame(
+  participant_id = 1:3,
+  stimulus       = c(2L, 10L, 42L),   # 10 and 42 exceed the 5-col pool
+  response       = 1L
+)
+check_stimulus_alignment(stim_bad, method = "briefrc", noise_matrix = mat)
+```
+
+Any id outside `[1, pool_size]` returns **fail**. If more than half the
+pool is never referenced in the data, you get a **warn** — that's often
+a sign the stimulus file doesn't match the experiment you ran.
+
+### 6.7. `check_version_compat()`
+
+Every `.RData` produced by `rcicr::generateStimuli2IFC()` stores a
+`generator_version` field. When you reconstruct CIs later, the installed
+`rcicr` version should match — subtle API or numerical changes between
+versions can silently produce different CIs from the same data.
+
+```{r version}
+tmp <- tempfile(fileext = ".RData")
+generator_version <- "0.4.0"
+n_trials <- 100L
+save(generator_version, n_trials, file = tmp)
+
+check_version_compat(tmp)
+```
+
+The status depends on whether the versions match: **pass** if equal,
+**warn** if different, **warn** with a clear note if the `.RData` doesn't
+record a version at all or `rcicr` isn't installed in the current
+session.
+
+### 6.8. `validate_noise_matrix()` (Brief-RC)
 
 `read_noise_matrix()` reads a space-delimited text file into a numeric
 matrix. For a self-contained example we just build one in memory and
@@ -342,7 +444,106 @@ expected dimensions returns **fail** with a specific message. A lot of
 early-pipeline errors surface here — confusing pixel count with stimulus
 count, saving the matrix with an unexpected delimiter, and so on.
 
-### 6.6. Loading response data from disk
+### 6.9. `compute_infoval_summary()`
+
+Computes the **information value** (infoVal; Brinkman et al., 2019) for
+every participant. InfoVal is a z-like score describing how far a
+participant's CI is from a null-response reference distribution. Values
+around or below `1.96` are effectively indistinguishable from noise;
+higher values indicate meaningful signal.
+
+The function delegates the heavy lifting to `rcicr`:
+`batchGenerateCI2IFC()` / `computeInfoVal2IFC()` for 2IFC, the
+`*_brief` equivalents for Brief-RC. On the first call `rcicr` simulates
+a reference distribution (10 000 iterations by default — a few minutes)
+and caches it *inside the `.RData` file* so subsequent calls are fast.
+**Copy your `.RData` beforehand if you want the original untouched.**
+
+```{r infoval, eval = FALSE}
+iv <- compute_infoval_summary(
+  responses,
+  method    = "2ifc",
+  rdata     = "data-raw/generated/rcicr_2ifc_stimuli.RData",
+  baseimage = "base",
+  iter      = 10000,
+  threshold = 1.96
+)
+iv
+# $data$per_participant has: participant_id, infoval, meaningful
+head(iv$data$per_participant)
+```
+
+Returned as an `rcdiag_result`. Status:
+
+- **pass** if ≥ 80% of participants have `infoval >= threshold`;
+- **warn** if 50–80% do;
+- **fail** otherwise (your data is mostly noise).
+
+Use `$data$per_participant` to pull out individual participants' scores
+and the `meaningful` flag for downstream exclusion.
+
+### 6.10. `check_response_inversion()`
+
+Occasionally a whole batch of response data has its `+1`/`-1` codes
+systematically flipped — for example, the export script recorded
+*button number* rather than *chosen face side*, and the mapping was
+reversed. An inverted CI looks perfectly reasonable but represents the
+opposite mental content from what you meant to measure.
+
+This check computes infoVal twice — once with the original responses
+and once with every response sign-flipped — and flags participants whose
+flipped infoVal exceeds the original by at least `margin` (default
+`1.96`). Any non-zero count is a strong signal.
+
+```{r inversion, eval = FALSE}
+check_response_inversion(
+  responses,
+  method    = "2ifc",
+  rdata     = "data-raw/generated/rcicr_2ifc_stimuli.RData",
+  baseimage = "base",
+  margin    = 1.96,
+  iter      = 10000
+)
+```
+
+Runs two infoVal sweeps, so it takes roughly twice as long as a single
+`compute_infoval_summary()` call. `$data$per_participant` includes
+`infoval_original`, `infoval_flipped`, `delta`, and `likely_inverted`.
+
+### 6.11. `cross_validate_rt_infoval()`
+
+Correlates per-participant infoVal with per-participant median RT.
+The check flags two patterns that are individually plausible but
+jointly suspicious:
+
+1. **High infoVal paired with fast median RT.** A participant with
+   a seemingly informative CI while responding faster than peers is
+   more likely to have stumbled onto signal by chance than to be
+   genuinely informative.
+2. **A negative correlation** between infoVal and RT *across*
+   participants. If fast responders systematically score higher on
+   infoVal, something about the measurement is off — possibly a
+   click-pattern artefact.
+
+```{r rt_infoval, eval = FALSE}
+cross_validate_rt_infoval(
+  responses,
+  method    = "2ifc",
+  rdata     = "data-raw/generated/rcicr_2ifc_stimuli.RData",
+  baseimage = "base",
+  col_rt    = "rt",
+  iter      = 10000
+)
+```
+
+`$data$correlation` gives the Pearson correlation.
+`$data$per_participant` adds a `fast_and_confident` flag (below-group-
+median RT **and** above-group-median infoVal) for inspection. Status is
+**warn** when the correlation drops to −0.30 or lower; the check does
+not auto-exclude anyone, because the interpretation depends on the
+experiment.
+
+### 6.12. `load_responses()`
 
 `load_responses()` is a thin wrapper around `data.table::fread()` (a
 fast CSV reader) that checks the required columns are present. Use it
@@ -377,12 +578,21 @@ example, to sanity-check the response CSV by itself:
 run_all_checks(responses, method = "2ifc")
 ```
 
-Per-check options are passed through:
+Per-check options are passed through. Common ones:
+
+- `expected_n` → forwarded to `check_trial_counts()`.
+- `col_rt` → when supplied (and the column exists), `check_rt()` runs
+  and, if combined with `rdata` and `infoval_iter`, so does
+  `cross_validate_rt_infoval()`.
+- `infoval_iter` → number of iterations for the reference-distribution
+  simulation. **Default `NULL`**, which means the three infoVal-based
+  checks are skipped. Set to e.g. `10000` to enable them — expect the
+  first call to take a few minutes.
 
 ```{r run-threshold}
 run_all_checks(
   responses,
-  method = "2ifc",
+  method     = "2ifc",
   expected_n = 100
 )
 ```
@@ -405,48 +615,28 @@ Four statuses:
   fix). Look at `$data` and decide.
 - **fail** (red) — something that will corrupt downstream CIs or infoVal
   if you ignore it. Fix before proceeding.
-- **skip** (grey) — the check didn't run. In this release that means
-  "not yet implemented" — see Section 9.
+- **skip** (grey) — the check didn't run because its required inputs
+  weren't supplied. For example, `check_rt()` is skipped when `col_rt`
+  is `NULL`, and the infoVal-based checks are skipped when either
+  `rdata` or `infoval_iter` is missing. The report's "Skipped checks"
+  list spells out the reason.
 
 A practical workflow:
 
-1. Run `run_all_checks()` once on the raw data.
+1. Run `run_all_checks()` once on the raw data with only the response
+   CSV.
 2. Resolve every **fail** first.
 3. Investigate every **warn**. Either fix it, or add a short note in
    your analysis script saying why the warning is acceptable for this
    dataset (so you or a collaborator don't re-investigate later).
-4. Only once every check is **pass** — or a consciously accepted
+4. Once the basic checks pass, rerun with `rdata = ...`,
+   `col_rt = "rt"`, and `infoval_iter = 10000` to unlock the infoVal-
+   dependent checks.
+5. Only when every check is **pass** — or a consciously accepted
    **warn** — move on to `rcicr::generateCI2IFC()` (2IFC) or your
    Brief-RC CI code.
 
-## 9. Checks not yet implemented
-
-Six checks are defined as named functions but not yet implemented.
-Calling them directly stops with an informative error, and
-`run_all_checks()` lists them under `report$skipped_checks` without
-trying to run them.
-
-- `check_response_inversion()` — compute the CI twice (with original
-  and flipped response codes) and compare infoVal. Flags data that
-  looks inverted.
-- `check_stimulus_alignment()` — verify stimulus numbers line up with
-  the parameters in the `.RData` (2IFC) or the columns of the noise
-  matrix (briefRC).
-- `check_rt()` — RT distributional checks (implausibly fast responses,
-  very low within-participant variability).
-- `check_version_compat()` — the `rcicr` version that produced the
-  `.RData` versus the installed version.
-- `compute_infoval_summary()` — per-participant infoVal with descriptive
-  statistics and flags (Mangini & Biederman, 2004; Brinkman et al., 2019).
-- `cross_validate_rt_infoval()` — correlate infoVal with RT quality
-  metrics to spot fast-and-confident false positives.
-
-These all depend on CI generation: via `rcicr` for 2IFC, or a
-permutation-based infoVal for briefRC. Both are non-trivial and are
-deliberately postponed to a later release rather than shipped as
-potentially-wrong statistics.
-
-## 10. References
+## 9. References
 
 Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch, R., & Aarts, H. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*(5), 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
 
@@ -458,7 +648,7 @@ Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit: Estimatin
 
 Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief reverse correlation: An improved tool to assess visual representations. *European Journal of Social Psychology*. Advance online publication. https://doi.org/10.1002/ejsp.3100
 
-## 11. Authorship
+## 10. Authorship
 
 Developed by M. Oliveira with Claude (Anthropic) assistance.
 M. Oliveira is responsible for the content.
