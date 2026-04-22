@@ -25,10 +25,13 @@ Imports:
     cli,
     data.table
 Suggests:
+    dplyr,
+    foreach,
     knitr,
     rcicr,
     rmarkdown,
     testthat (>= 3.0.0),
+    tibble,
     withr
 Remotes:
     rdotsch/rcicr

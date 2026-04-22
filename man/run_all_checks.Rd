@@ -2,50 +2,61 @@
 % Please edit documentation in R/run_all_checks.R
 \name{run_all_checks}
 \alias{run_all_checks}
-\title{Run the full battery of implemented diagnostic checks}
+\title{Run the full battery of diagnostic checks}
 \usage{
 run_all_checks(
   responses,
   method = NULL,
   rdata = NULL,
   noise_matrix = NULL,
+  baseimage = "base",
   expected_n = NULL,
   col_participant = "participant_id",
   col_stimulus = "stimulus",
   col_response = "response",
   col_rt = NULL,
+  infoval_iter = NULL,
   ...
 )
 }
 \arguments{
 \item{responses}{A data frame of trial-level responses.}
 
-\item{method}{Either \code{"2ifc"} or \code{"briefrc"}, or left as the default
-\code{NULL} to auto-detect from the supplied \code{rdata} / \code{noise_matrix}.}
+\item{method}{\code{"2ifc"} or \code{"briefrc"}, or \code{NULL} to auto-detect.}
 
-\item{rdata}{Optional. Path to a 2IFC \code{.RData} file produced by
-\code{\link[rcicr:generateStimuli2IFC]{rcicr::generateStimuli2IFC()}}. Not used by the current set of
-implemented checks; reserved for future CI-dependent checks.}
+\item{rdata}{Optional. Path to an rcicr \code{.RData} file. Enables
+\code{\link[=check_stimulus_alignment]{check_stimulus_alignment()}}, \code{\link[=check_version_compat]{check_version_compat()}} (2IFC),
+\code{\link[=compute_infoval_summary]{compute_infoval_summary()}}, \code{\link[=check_response_inversion]{check_response_inversion()}}, and
+\code{\link[=cross_validate_rt_infoval]{cross_validate_rt_infoval()}}.}
 
-\item{noise_matrix}{Optional. Path to a Brief-RC noise matrix text
-file. Used by \code{\link[=validate_noise_matrix]{validate_noise_matrix()}} when supplied.}
+\item{noise_matrix}{Optional. Path to a Brief-RC noise-matrix text
+file, or an already-loaded numeric matrix. Enables
+\code{\link[=validate_noise_matrix]{validate_noise_matrix()}} and \code{\link[=check_stimulus_alignment]{check_stimulus_alignment()}} (Brief-RC).}
 
-\item{expected_n}{Optional. Passed through to \code{\link[=check_trial_counts]{check_trial_counts()}}.}
+\item{baseimage}{Name of the base image used at stimulus-generation
+time (key in \code{base_face_files} in the rdata). Default \code{"base"}.
+Only consulted when the infoval-dependent checks run.}
 
-\item{col_participant, col_stimulus, col_response, col_rt}{Column name
-overrides, passed to the individual checks.}
+\item{expected_n}{Optional. Passed to \code{\link[=check_trial_counts]{check_trial_counts()}}.}
 
-\item{...}{Unused. Reserved for forward compatibility.}
+\item{col_participant, col_stimulus, col_response, col_rt}{Column-name
+overrides.}
+
+\item{infoval_iter}{Number of iterations for rcicr's reference
+distribution; \code{NULL} disables infoVal checks even if \code{rdata} is
+supplied. Default \code{NULL} because the reference simulation is slow
+and unwanted by default; set e.g. \code{10000} to enable.}
+
+\item{...}{Unused.}
 }
 \value{
-An object of class \code{"rcdiag_report"} with elements
-\code{results} (named list of \code{\link[=rcdiag_result]{rcdiag_result()}}s), \code{skipped_checks}
-(character vector), and \code{method}.
+An object of class \code{rcdiag_report}.
 }
 \description{
-Executes every implemented check and returns a \code{\link[=rcdiag_report]{rcdiag_report()}} object
-collecting the results. Checks that are not yet implemented are listed
-in the report under \verb{$skipped_checks} but are not called.
+Executes every implemented check and returns a \code{\link[=rcdiag_report]{rcdiag_report()}}
+collecting the results. Checks whose required inputs are missing are
+skipped gracefully and listed in the report's \verb{$skipped_checks}
+element.
 }
 \details{
 The orchestrator auto-detects the method when only \code{rdata} or only
@@ -55,9 +66,10 @@ The orchestrator auto-detects the method when only \code{rdata} or only
 responses <- data.frame(
   participant_id = rep(1:3, each = 100),
   stimulus       = rep(1:100, 3),
-  response       = sample(c(-1, 1), 300, replace = TRUE)
+  response       = sample(c(-1, 1), 300, replace = TRUE),
+  rt             = round(exp(rnorm(300, 6.7, 0.4)) + 100, 1)
 )
-report <- run_all_checks(responses, method = "2ifc")
+report <- run_all_checks(responses, method = "2ifc", col_rt = "rt")
 print(report)
 
 }

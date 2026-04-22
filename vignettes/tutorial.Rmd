@@ -446,19 +446,7 @@ permutation-based infoVal for briefRC. Both are non-trivial and are
 deliberately postponed to a later release rather than shipped as
 potentially-wrong statistics.
 
-## 10. Next steps
-
-- **Example datasets**: the `data-raw/` folder contains stubs for
-  `generate_example_2ifc.R` and `generate_example_briefrc.R`. Running
-  these will populate `inst/extdata/` with a reproducible synthetic
-  RC dataset you can practise on.
-- **Pipeline-specific quickstarts**: once the CI-generation–dependent
-  checks land, separate `quickstart-2ifc` and `quickstart-briefrc`
-  vignettes will walk through the full pipeline end to end.
-- **A Quarto ebook version**: this tutorial is written in R Markdown
-  and maps cleanly to Quarto; a standalone ebook version is planned.
-
-## 11. References
+## 10. References
 
 Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch, R., & Aarts, H. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*(5), 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
 
@@ -470,7 +458,7 @@ Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit: Estimatin
 
 Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief reverse correlation: An improved tool to assess visual representations. *European Journal of Social Psychology*. Advance online publication. https://doi.org/10.1002/ejsp.3100
 
-## 12. Authorship
+## 11. Authorship
 
 Developed by M. Oliveira with Claude (Anthropic) assistance.
 M. Oliveira is responsible for the content.

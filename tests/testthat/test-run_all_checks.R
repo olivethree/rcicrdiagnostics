@@ -16,7 +16,9 @@ test_that("run_all_checks returns an rcdiag_report", {
 test_that("run_all_checks auto-detects 2ifc from rdata arg", {
   skip_if_not_installed("withr")
   tmp <- withr::local_tempfile(fileext = ".RData")
-  saveRDS(NULL, tmp)
+  generator_version <- "0.0.0"
+  n_trials <- 100L
+  save(generator_version, n_trials, file = tmp)
   r <- run_all_checks(make_responses(), rdata = tmp)
   expect_equal(r$method, "2ifc")
 })
@@ -28,7 +30,7 @@ test_that("run_all_checks requires method if no hint is given", {
 test_that("print works without error", {
   r <- run_all_checks(make_responses(), method = "2ifc")
   expect_output(print(r), "Data-quality report")
-  expect_output(print(r), "Not yet implemented")
+  expect_output(print(r), "Skipped checks")
 })
 
 test_that("summary returns a data frame", {

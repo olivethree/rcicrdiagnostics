@@ -60,3 +60,20 @@ validate_responses_df <- function(responses,
 rlang_caller_env <- function() {
   parent.frame(2L)
 }
+
+# Attach one or more packages to the search path if not already attached.
+# Used for wrappers around rcicr whose internal code relies on non-exported
+# infix operators (%dopar%, %>%) or on tribble being in scope.
+ensure_attached <- function(pkgs) {
+  for (pkg in pkgs) {
+    if (paste0("package:", pkg) %in% search()) next
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      cli::cli_abort(c(
+        "Package {.pkg {pkg}} is required for this operation.",
+        "i" = "Install it with {.code install.packages(\"{pkg}\")}."
+      ))
+    }
+    attachNamespace(pkg)
+  }
+  invisible(NULL)
+}

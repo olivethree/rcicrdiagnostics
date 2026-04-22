@@ -57,7 +57,7 @@ print.rcdiag_report <- function(x, ...) {
   ))
   cat("\n")
   if (length(x$skipped_checks) > 0L) {
-    cat("\nNot yet implemented (skipped):\n")
+    cat("\nSkipped checks:\n")
     for (nm in x$skipped_checks) {
       cat("  - ", nm, "\n", sep = "")
     }
