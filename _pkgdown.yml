@@ -1,48 +1,4 @@
 url: https://olivethree.github.io/rcicrdiagnostics/
-
 template:
   bootstrap: 5
 
-navbar:
-  structure:
-    left: [intro, articles, reference, news]
-  components:
-    articles:
-      text: Tutorial
-      href: articles/tutorial.html
-
-articles:
-  - title: "Tutorial"
-    contents:
-      - tutorial
-
-reference:
-  - title: "Orchestrator"
-    contents:
-      - run_all_checks
-  - title: "Individual checks"
-    contents:
-      - check_response_coding
-      - check_trial_counts
-      - check_duplicates
-      - check_response_bias
-  - title: "Noise matrix utilities (Brief-RC)"
-    contents:
-      - read_noise_matrix
-      - validate_noise_matrix
-  - title: "Data loading"
-    contents:
-      - load_responses
-  - title: "Result objects"
-    contents:
-      - rcdiag_result
-      - rcdiag_report
-      - is_rcdiag_result
-  - title: "Not yet implemented"
-    contents:
-      - check_response_inversion
-      - check_stimulus_alignment
-      - check_rt
-      - check_version_compat
-      - compute_infoval_summary
-      - cross_validate_rt_infoval
