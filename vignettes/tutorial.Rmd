@@ -71,7 +71,7 @@ R 4.1 or newer.
   release, see Section 9). Install from GitHub:
 
     ```r
-    remotes::install_github("rdotsch/rcicr", ref = "development")
+    remotes::install_github("rdotsch/rcicr")
     ```
 
 - `testthat`, `knitr`, `rmarkdown`, `withr` — only needed if you are

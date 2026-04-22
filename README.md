@@ -38,7 +38,7 @@ pak::pak("olivethree/rcicrdiagnostics")
 `rcicr` is a **Suggests** dependency and is only needed for 2IFC workflows. Brief-RC users do not need it. If you want it, install it from GitHub too:
 
 ```r
-remotes::install_github("rdotsch/rcicr", ref = "development")
+remotes::install_github("rdotsch/rcicr")
 ```
 
 ## Quick start

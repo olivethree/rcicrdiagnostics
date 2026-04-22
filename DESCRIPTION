@@ -31,6 +31,6 @@ Suggests:
     testthat (>= 3.0.0),
     withr
 Remotes:
-    rdotsch/rcicr@development
+    rdotsch/rcicr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
