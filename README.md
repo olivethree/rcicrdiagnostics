@@ -17,7 +17,7 @@ Exported functions fall into three families:
 
 - `check_*()` — individual diagnostics (response coding, stimulus alignment, trial counts, duplicates, response bias, RT, version compatibility, response inversion).
 - `compute_*()` — summary computations (batch infoVal with flags, RT × infoVal cross-validation).
-- `run_all_checks()` — orchestrator that runs the full battery and returns a formatted pass/warn/fail report.
+- `run_diagnostics()` — orchestrator that runs the full battery and returns a formatted pass/warn/fail report.
 
 ## Installation
 
@@ -53,7 +53,7 @@ responses <- read.csv(system.file("extdata", "example_2ifc_responses.csv",
 rdata     <- system.file("extdata", "example_rcicr_stimuli.RData",
                          package = "rcicrdiagnostics")
 
-report <- run_all_checks(responses, method = "2ifc", rdata = rdata)
+report <- run_diagnostics(responses, method = "2ifc", rdata = rdata)
 print(report)
 ```
 
@@ -69,7 +69,7 @@ noise_matrix <- system.file("extdata", "example_noise_matrix_128.txt",
 base_image   <- system.file("extdata", "example_base_face_128.png",
                             package = "rcicrdiagnostics")
 
-report <- run_all_checks(responses, method = "briefrc",
+report <- run_diagnostics(responses, method = "briefrc",
                          noise_matrix = noise_matrix,
                          base_image   = base_image)
 print(report)

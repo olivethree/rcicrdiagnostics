@@ -38,11 +38,11 @@
 #'   response       = sample(c(-1, 1), 300, replace = TRUE),
 #'   rt             = round(exp(rnorm(300, 6.7, 0.4)) + 100, 1)
 #' )
-#' report <- run_all_checks(responses, method = "2ifc", col_rt = "rt")
+#' report <- run_diagnostics(responses, method = "2ifc", col_rt = "rt")
 #' print(report)
 #'
 #' @export
-run_all_checks <- function(responses,
+run_diagnostics <- function(responses,
                            method = NULL,
                            rdata = NULL,
                            noise_matrix = NULL,

@@ -176,7 +176,7 @@ head(responses)
 Run the full set of checks:
 
 ```{r run-2ifc}
-report <- run_all_checks(responses, method = "2ifc")
+report <- run_diagnostics(responses, method = "2ifc")
 report
 ```
 
@@ -198,7 +198,7 @@ Skipped checks:
   - cross_validate_rt_infoval (needs infoval)
 ```
 
-nothing has failed — you just haven't handed `run_all_checks()` the
+nothing has failed — you just haven't handed `run_diagnostics()` the
 extra inputs those checks need. Section 7.1 walks through exactly what
 to pass for each one so you can progressively unlock them.
 
@@ -224,7 +224,7 @@ Four fields you can read directly:
   problem participants from the dataset you eventually feed to the CI
   generator.
 
-`run_all_checks()` returns a collection of these, wrapped in an
+`run_diagnostics()` returns a collection of these, wrapped in an
 `rcdiag_report`. `summary()` flattens the collection into a tidy data
 frame — handy if you want to filter or log statuses:
 
@@ -571,26 +571,26 @@ responses <- load_responses("my_data.csv", method = "2ifc")
 It returns a `data.table`, which behaves like a regular `data.frame`
 for the check functions — you don't need to learn a new syntax.
 
-## 7. `run_all_checks()`
+## 7. `run_diagnostics()`
 
-`run_all_checks()` runs every implemented check in one call and returns
+`run_diagnostics()` runs every implemented check in one call and returns
 the collected `rcdiag_report`. It works out the `method` automatically
 when exactly one of `rdata` or `noise_matrix` is supplied, so you
 usually don't need to set `method` yourself:
 
 ```{r run-auto, eval = FALSE}
 # Auto-detected as "2ifc" because rdata is supplied:
-run_all_checks(responses, rdata = "stimuli.RData")
+run_diagnostics(responses, rdata = "stimuli.RData")
 
 # Auto-detected as "briefrc":
-run_all_checks(responses, noise_matrix = "noise_matrix_128.txt")
+run_diagnostics(responses, noise_matrix = "noise_matrix_128.txt")
 ```
 
 Pass `method` explicitly when you have neither file on hand — for
 example, to sanity-check the response CSV by itself:
 
 ```{r run-explicit}
-run_all_checks(responses, method = "2ifc")
+run_diagnostics(responses, method = "2ifc")
 ```
 
 Per-check options are passed through. Common ones:
@@ -605,7 +605,7 @@ Per-check options are passed through. Common ones:
   first call to take a few minutes.
 
 ```{r run-threshold}
-run_all_checks(
+run_diagnostics(
   responses,
   method     = "2ifc",
   expected_n = 100
@@ -616,7 +616,7 @@ For programmatic access, the individual results live under
 `report$results`:
 
 ```{r results-list}
-report <- run_all_checks(responses, method = "2ifc")
+report <- run_diagnostics(responses, method = "2ifc")
 vapply(report$results, `[[`, character(1), "status")
 ```
 
@@ -643,7 +643,7 @@ calls on the same file are fast — you pay that cost once per rdata.
 A full-battery invocation for a 2IFC analysis looks like this:
 
 ```{r run-all, eval = FALSE}
-full <- run_all_checks(
+full <- run_diagnostics(
   responses,
   method       = "2ifc",
   rdata        = "data-raw/generated/rcicr_2ifc_stimuli.RData",
@@ -662,7 +662,7 @@ alignment` step. The infoVal-based checks still need an rcicr-compatible
 `.RData` (produced by `rcicr::generateStimuli_brief()`) plus
 `infoval_iter`; see Section 6.9 for the data-format caveat.
 
-**On the name**: `run_all_checks()` runs *every check whose required
+**On the name**: `run_diagnostics()` runs *every check whose required
 inputs are available*, not "every check unconditionally". The printed
 `Skipped checks` list is how it keeps that honest — nothing runs
 halfway, nothing errors silently. Treat the list as a to-do: each line
@@ -686,7 +686,7 @@ Four statuses:
 
 A practical workflow:
 
-1. Run `run_all_checks()` once on the raw data with only the response
+1. Run `run_diagnostics()` once on the raw data with only the response
    CSV.
 2. Resolve every **fail** first.
 3. Investigate every **warn**. Either fix it, or add a short note in
