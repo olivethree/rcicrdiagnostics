@@ -55,12 +55,39 @@ split across three trial-count conditions (10 × 300 trials, 10 × 500,
 | Count | Archetype | What it looks like                                     | Expected check status   |
 | ----- | --------- | ------------------------------------------------------ | ------------------------- |
 | 20    | signal    | near-balanced responses                                | pass                      |
-|  6    | biased    | ~80/20 split toward one response                       | warn (`check_response_bias`) |
-|  2    | constant  | every row identical                                     | fail (`check_response_bias`) |
+|  6    | biased    | ~80/20 split toward one response sign                  | warn (`check_response_bias`) |
+|  2    | constant  | every row identical (all +1)                           | fail (`check_response_bias`) |
 |  2    | inverted  | same distribution as signal, sign-flipped              | pass today; flagged later by `check_response_inversion` |
 
 The `participants_*.csv` files in `generated/` record the true archetype
 per participant, so you can confirm the diagnostics flag the right ones.
+
+### Brief-RC 12 response format (per Schmitz et al., 2024)
+
+Each row in `responses_briefrc12.csv` is **one trial**. The 12 noisy
+faces presented per trial are not recorded; only the face the
+participant selected is, as two pieces of information:
+
+| Column           | Meaning                                                           |
+| ---------------- | ----------------------------------------------------------------- |
+| `participant_id` | Producer id.                                                      |
+| `trial`          | Trial number within that participant's session.                   |
+| `stimulus`       | Pool id of the underlying noise pattern of the chosen face.       |
+| `response`       | `+1` if the oriented version was chosen, `-1` if the inverted was.|
+| `rt`             | Response time (ms) for that trial.                                |
+
+This matches how Schmitz et al. adapted rcicr's `genCI`: the CI is
+reconstructed by averaging the selected noise patterns, each signed by
+whether the oriented or inverted version was picked. Unchosen faces
+contribute nothing and so are not recorded. The `response` column has
+exactly the same `{-1, +1}` semantics as the 2IFC pipeline.
+
+> **Known limitation.** Because Brief-RC trials draw 12 faces (with
+> replacement across trials) from a 300-stimulus pool, the same
+> `(participant, stimulus)` pair legitimately recurs across trials.
+> `check_duplicates` flags these as pair duplicates and returns **warn**.
+> For Brief-RC this is a false positive; a future method-aware version
+> of the check will suppress it.
 
 ## Parameters you might want to change
 

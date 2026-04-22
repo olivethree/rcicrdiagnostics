@@ -1,25 +1,39 @@
-# Generate bogus Brief-RC 12-alternative response data for the diagnostics.
+# Generate bogus Brief-RC 12-alternative response data that follows the
+# Schmitz, Rougier, & Yzerbyt (2024) convention.
+#
+# Reference
+#   Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief
+#   reverse correlation: An improved tool to assess visual representations.
+#   European Journal of Social Psychology. Advance online publication.
+#   https://doi.org/10.1002/ejsp.3100
+#
+# Per-trial structure (from Schmitz et al., p. 6)
+#   Each trial presents 12 noisy faces: 6 oriented (base + noise_i) and
+#   6 inverted (base - noise_i), drawn from a shared pool of noise patterns.
+#   The participant picks exactly one face.
+#
+# Row format (one row per trial, matching rcicr::genCI conventions)
+#   participant_id, trial, stimulus, response, rt
+#     stimulus : pool id of the underlying noise pattern of the chosen face
+#     response : +1 if the oriented version was chosen, -1 if the inverted
 #
 # Design (matches CLAUDE.md spec)
-#   30 participants across three trial-count conditions (10 each): 300 / 500 / 1000
-#   Stimulus pool: 300 (matches 01_generate_noise.R)
-#   12 noisy faces presented per trial, participant picks one.
-#
-# Row format (expanded — one row per stimulus shown per trial)
-#   participant_id, trial, stimulus, response, rt
-#   For an honest trial: the chosen stimulus has response = 1, each of the
-#   other 11 has response = -1/11. Per-trial response sum is 0.
+#   30 participants across three trial-count conditions (10 each):
+#     300 / 500 / 1000 trials per participant
+#   Noise-pattern pool size: 300 (matches 01_generate_noise.R)
 #
 # Archetypes
 #   20 x signal     picks uniformly at random from the 12 shown
-#    6 x biased     picks a fixed favourite stimulus when it happens to be shown,
-#                   otherwise uniform random
-#    2 x constant   every row has response = 1 (corrupt data) — triggers fail
-#    2 x inverted   picks the last shown instead of a random one
+#    6 x biased     ~80% chance of preferring the oriented (or inverted)
+#                   side regardless of the noise pattern; triggers WARN
+#    2 x constant   always picks an oriented face -> response is always +1;
+#                   triggers FAIL in check_response_bias
+#    2 x inverted   distribution like "signal" but with every response flipped
 #
 # Outputs (data-raw/generated/)
 #   responses_briefrc12.csv        # participant_id, trial, stimulus, response, rt
-#   participants_briefrc12.csv     # participant_id, trial_count, archetype
+#   participants_briefrc12.csv     # participant_id, trial_count, archetype,
+#                                  # prefer_sign (for biased archetype)
 #
 # Usage
 #   setwd("<repo root>")
@@ -27,9 +41,11 @@
 
 # ---- configuration --------------------------------------------------------
 
-out_dir        <- "data-raw/generated"
-n_stim         <- 300L
-n_alternatives <- 12L
+out_dir         <- "data-raw/generated"
+n_stim          <- 300L
+n_alternatives  <- 12L
+n_oriented      <- n_alternatives / 2L
+n_inverted      <- n_alternatives - n_oriented
 
 trial_counts <- c(rep(300L, 10), rep(500L, 10), rep(1000L, 10))
 archetype    <- c(
@@ -43,13 +59,32 @@ n_participants <- length(trial_counts)
 
 # ---- helpers --------------------------------------------------------------
 
-pick_choice <- function(shown, archetype, favourite) {
+# Draw a single trial: 12 distinct noise-pattern ids, half displayed as
+# oriented (+1) and half as inverted (-1). Returns a data.frame with
+# columns {id, sign}.
+sample_shown <- function() {
+  ids   <- sample.int(n_stim, n_alternatives)
+  signs <- sample(c(rep(1L, n_oriented), rep(-1L, n_inverted)))
+  data.frame(id = ids, sign = signs)
+}
+
+# Given the 12 shown faces, return the index (1..12) picked by the
+# participant under the given archetype.
+pick_index <- function(shown, archetype, prefer_sign) {
+  n <- nrow(shown)
   switch(
     archetype,
-    signal   = sample(shown, 1L),
-    biased   = if (favourite %in% shown) favourite else sample(shown, 1L),
-    constant = sample(shown, 1L),  # choice does not matter; see override below
-    inverted = shown[length(shown)]
+    signal   = sample.int(n, 1L),
+    biased   = {
+      if (runif(1) < 0.80) {
+        matches <- which(shown$sign == prefer_sign)
+        if (length(matches) > 0L) sample(matches, 1L) else sample.int(n, 1L)
+      } else {
+        sample.int(n, 1L)
+      }
+    },
+    constant = which(shown$sign == 1L)[1L],
+    inverted = sample.int(n, 1L)
   )
 }
 
@@ -67,37 +102,35 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 set.seed(22L)
 
 participant_ids <- sprintf("P%02d", seq_len(n_participants))
-favourites      <- sample.int(n_stim, n_participants, replace = TRUE)
+# Biased participants: half prefer oriented (+1), half prefer inverted (-1).
+prefer_signs <- ifelse(seq_len(n_participants) %% 2L == 0L, 1L, -1L)
 
-# Pre-allocate per participant (12 rows per trial x trial_counts[i]).
 rows <- vector("list", n_participants)
 for (i in seq_len(n_participants)) {
-  nt <- trial_counts[i]
-  total <- nt * n_alternatives
+  nt  <- trial_counts[i]
+  pid <- participant_ids[i]
+  arc <- archetype[i]
+  ps  <- prefer_signs[i]
 
-  pid_col      <- rep(participant_ids[i], total)
-  trial_col    <- rep(seq_len(nt), each = n_alternatives)
-  stim_col     <- integer(total)
-  response_col <- numeric(total)
-  rt_col       <- numeric(total)
+  stim_col  <- integer(nt)
+  resp_col  <- integer(nt)
+  rt_col    <- numeric(nt)
 
   for (t in seq_len(nt)) {
-    shown  <- sample.int(n_stim, n_alternatives)
-    chosen <- pick_choice(shown, archetype[i], favourites[i])
-    rt     <- trial_rt()
-    idx    <- ((t - 1L) * n_alternatives + 1L):(t * n_alternatives)
-    stim_col[idx]     <- shown
-    response_col[idx] <- ifelse(shown == chosen, 1, -1 / (n_alternatives - 1))
-    rt_col[idx]       <- rt
+    shown       <- sample_shown()
+    chosen_idx  <- pick_index(shown, arc, ps)
+    stim_col[t] <- shown$id[chosen_idx]
+    resp_col[t] <- shown$sign[chosen_idx]
+    rt_col[t]   <- trial_rt()
   }
 
-  if (archetype[i] == "constant") response_col <- rep(1, total)
+  if (arc == "inverted") resp_col <- -resp_col
 
   rows[[i]] <- data.frame(
-    participant_id = pid_col,
-    trial          = trial_col,
+    participant_id = pid,
+    trial          = seq_len(nt),
     stimulus       = stim_col,
-    response       = response_col,
+    response       = resp_col,
     rt             = round(rt_col, 1)
   )
 }
@@ -107,7 +140,7 @@ participants <- data.frame(
   participant_id = participant_ids,
   trial_count    = trial_counts,
   archetype      = archetype,
-  favourite      = favourites
+  prefer_sign    = ifelse(archetype == "biased", prefer_signs, NA_integer_)
 )
 
 # ---- write ----------------------------------------------------------------

@@ -50,6 +50,55 @@ if (length(image_paths) == 0L) {
 base_path <- image_paths[1L]
 cat("Using base image:", base_path, "\n")
 
+# ---- image normalisation --------------------------------------------------
+# rcicr::generateStimuli2IFC needs a square, single-channel (grayscale)
+# image whose pixel dims equal img_size. It does not resize or
+# convert on your behalf. We normalise into a temp file so your
+# original stays untouched.
+
+normalise_image <- function(path, target_size) {
+  ext <- tolower(tools::file_ext(path))
+  img <- switch(
+    ext,
+    jpg  = jpeg::readJPEG(path),
+    jpeg = jpeg::readJPEG(path),
+    png  = png::readPNG(path),
+    stop("Unsupported image extension: ", ext)
+  )
+
+  # Drop alpha channel if present; collapse RGB to luminance.
+  if (length(dim(img)) == 3L) {
+    if (dim(img)[3L] == 4L) img <- img[, , 1:3]
+    img <- img[, , 1L] * 0.299 + img[, , 2L] * 0.587 + img[, , 3L] * 0.114
+  }
+
+  # Center-crop to a square if necessary.
+  if (nrow(img) != ncol(img)) {
+    cat(sprintf(
+      "  Image is %dx%d; center-cropping to a square.\n",
+      nrow(img), ncol(img)
+    ))
+    sz <- min(nrow(img), ncol(img))
+    r_off <- (nrow(img) - sz) %/% 2L
+    c_off <- (ncol(img) - sz) %/% 2L
+    img <- img[(r_off + 1L):(r_off + sz), (c_off + 1L):(c_off + sz)]
+  }
+
+  # Nearest-neighbour resize. Test data doesn't need bilinear smoothing.
+  if (nrow(img) != target_size) {
+    cat(sprintf(
+      "  Resizing from %dx%d to %dx%d (nearest-neighbour).\n",
+      nrow(img), ncol(img), target_size, target_size
+    ))
+    idx <- round(seq(1, nrow(img), length.out = target_size))
+    img <- img[idx, idx]
+  }
+
+  out <- tempfile(fileext = ".jpg")
+  jpeg::writeJPEG(img, out, quality = 0.95)
+  out
+}
+
 # ---- 2IFC stimuli via rcicr ----------------------------------------------
 
 if (!requireNamespace("rcicr", quietly = TRUE)) {
@@ -62,23 +111,44 @@ if (!requireNamespace("rcicr", quietly = TRUE)) {
   stim_2ifc_dir <- file.path(out_dir, "stimuli_2ifc")
   dir.create(stim_2ifc_dir, showWarnings = FALSE, recursive = TRUE)
 
-  # API varies slightly between rcicr versions. The call below follows the
-  # current (2.x) signature. If you get "unused argument" or similar, check
-  # ?rcicr::generateStimuli2IFC and adjust.
+  # rcicr uses `foreach(...) %dopar%` internally but doesn't re-export
+  # `%dopar%`. Attach foreach so the operator is found at evaluation time.
+  if (!requireNamespace("foreach", quietly = TRUE)) {
+    stop("rcicr needs 'foreach'. install.packages('foreach').")
+  }
+  if (!requireNamespace("jpeg", quietly = TRUE)) {
+    stop("Image normalisation needs 'jpeg'. install.packages('jpeg').")
+  }
+  if (!requireNamespace("png", quietly = TRUE)) {
+    stop("Image normalisation needs 'png'. install.packages('png').")
+  }
+  library(foreach)
+
+  cat("Normalising base image for rcicr...\n")
+  normalised_path <- normalise_image(base_path, img_size_2ifc)
+
+  # ncores = 1 avoids a known issue on macOS where PSOCK workers die
+  # during rcicr's foreach loop (the ~78 MB stimuli array gets serialized
+  # to each worker, racing with socket shutdown). With one worker the
+  # loop completes cleanly and rcicr's post-loop save() actually runs.
   rcicr::generateStimuli2IFC(
-    base_face_files = c(base = base_path),
+    base_face_files = list(base = normalised_path),
     n_trials        = n_stimuli,
     img_size        = img_size_2ifc,
     stimulus_path   = stim_2ifc_dir,
     label           = "rcdiag_2ifc",
-    seed            = seed_2ifc
+    seed            = seed_2ifc,
+    ncores          = 1L
   )
 
-  # rcicr writes the .RData to the current working directory in some versions
-  # and to stimulus_path in others. Find and normalise the location.
+  # rcicr saves to stimulus_path/${label}_seed_${seed}_time_<ts>.Rdata
+  # (lowercase 'Rdata'). Match case-insensitively and search both
+  # stimulus_path and the working directory for older rcicr versions.
   found <- c(
-    list.files(".",           pattern = "rcdiag_2ifc.*\\.RData$", full.names = TRUE),
-    list.files(stim_2ifc_dir, pattern = "rcdiag_2ifc.*\\.RData$", full.names = TRUE)
+    list.files(".",           pattern = "rcdiag_2ifc.*\\.Rdata$",
+               ignore.case = TRUE, full.names = TRUE),
+    list.files(stim_2ifc_dir, pattern = "rcdiag_2ifc.*\\.Rdata$",
+               ignore.case = TRUE, full.names = TRUE)
   )
   if (length(found) > 0L) {
     dest <- file.path(out_dir, "rcicr_2ifc_stimuli.RData")
