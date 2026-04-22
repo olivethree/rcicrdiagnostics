@@ -182,10 +182,25 @@ report
 
 That printout is what the package produces for you: one line per check,
 a coloured tag (green `[PASS]`, yellow `[WARN]`, red `[FAIL]`, grey
-`[SKIP]` on colour-capable consoles), and a short explanation. The
-"Skipped checks" list at the bottom tells you which checks didn't run —
-usually because the required input (an RT column, the stimulus `.RData`,
-etc.) wasn't passed to `run_all_checks()`.
+`[SKIP]` on colour-capable consoles), and a short explanation.
+
+The **`Skipped checks`** block underneath is equally informative. Each
+line names a check that *could have* run but didn't, together with the
+exact input that's missing. So when you see
+
+```
+Skipped checks:
+  - check_rt (no col_rt)
+  - check_stimulus_alignment (no rdata / noise_matrix)
+  - check_version_compat (no rdata)
+  - compute_infoval_summary (need rdata + infoval_iter)
+  - check_response_inversion (needs infoval)
+  - cross_validate_rt_infoval (needs infoval)
+```
+
+nothing has failed — you just haven't handed `run_all_checks()` the
+extra inputs those checks need. Section 7.1 walks through exactly what
+to pass for each one so you can progressively unlock them.
 
 ## 5. The result object
 
@@ -604,6 +619,54 @@ For programmatic access, the individual results live under
 report <- run_all_checks(responses, method = "2ifc")
 vapply(report$results, `[[`, character(1), "status")
 ```
+
+### 7.1. Unlocking the skipped checks
+
+By default — with only `responses` and `method` — only the four basic
+checks run. The remaining six are skipped and listed; each needs a
+specific additional input. The table is the full map:
+
+| Skipped check                 | How to unlock                                                                   |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `check_rt()`                  | pass `col_rt = "rt"` (and make sure that column exists in `responses`)          |
+| `check_stimulus_alignment()`  | pass `rdata = "..."` (2IFC) or `noise_matrix = "..."` (Brief-RC)                |
+| `check_version_compat()`      | pass `rdata = "..."` (2IFC only)                                                |
+| `compute_infoval_summary()`   | pass `rdata` **and** `infoval_iter` (e.g. `10000`)                              |
+| `check_response_inversion()`  | pass `rdata` **and** `infoval_iter` (runs infoVal twice, so takes ~2× as long)  |
+| `cross_validate_rt_infoval()` | pass `rdata`, `infoval_iter`, **and** `col_rt`                                  |
+
+`infoval_iter` is `NULL` by default because the reference-distribution
+simulation at `10000` iterations takes a few minutes on the first call.
+`rcicr` caches the distribution inside the `.RData` file, so subsequent
+calls on the same file are fast — you pay that cost once per rdata.
+
+A full-battery invocation for a 2IFC analysis looks like this:
+
+```{r run-all, eval = FALSE}
+full <- run_all_checks(
+  responses,
+  method       = "2ifc",
+  rdata        = "data-raw/generated/rcicr_2ifc_stimuli.RData",
+  baseimage    = "base",
+  col_rt       = "rt",
+  expected_n   = c(300, 500, 1000),
+  infoval_iter = 10000
+)
+full
+# When every input is supplied, the "Skipped checks" block disappears
+# and you get all 10 checks in the report.
+```
+
+For Brief-RC, swap `rdata` for `noise_matrix` at the `check_stimulus_-
+alignment` step. The infoVal-based checks still need an rcicr-compatible
+`.RData` (produced by `rcicr::generateStimuli_brief()`) plus
+`infoval_iter`; see Section 6.9 for the data-format caveat.
+
+**On the name**: `run_all_checks()` runs *every check whose required
+inputs are available*, not "every check unconditionally". The printed
+`Skipped checks` list is how it keeps that honest — nothing runs
+halfway, nothing errors silently. Treat the list as a to-do: each line
+tells you exactly what to add to the call to unlock that check.
 
 ## 8. Reading the report
 
