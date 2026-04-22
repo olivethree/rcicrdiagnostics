@@ -55,7 +55,7 @@ check_response_coding <- function(responses,
 
   n_total <- length(vals)
   n_na <- sum(is.na(vals))
-  finite <- vals[is.finite(vals)]
+  finite <- as.numeric(vals[is.finite(vals)])
   uniq <- sort(unique(finite))
 
   if (method == "briefrc") {

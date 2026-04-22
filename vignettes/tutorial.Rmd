@@ -460,7 +460,7 @@ potentially-wrong statistics.
 
 ## 11. References
 
-Brinkman, L., Goffin, S., van de Schoot, R., Visser, I., Derks, D., & Dotsch, R. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*, 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
+Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch, R., & Aarts, H. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*(5), 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
 
 Brinkman, L., Todorov, A., & Dotsch, R. (2017). Visualising mental representations: A primer on noise-based reverse correlation in social psychology. *European Review of Social Psychology*, *28*(1), 333–361. https://doi.org/10.1080/10463283.2017.1381469
 

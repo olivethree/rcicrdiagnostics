@@ -14,6 +14,23 @@ test_that("2IFC: all {-1, 1} passes", {
   expect_equal(r$status, "pass")
 })
 
+test_that("2IFC: integer-typed {-1L, 1L} passes (regression test for fread-read data)", {
+  r <- check_response_coding(
+    make_responses(rep(c(-1L, 1L), 50)),
+    method = "2ifc"
+  )
+  expect_equal(r$status, "pass")
+})
+
+test_that("2IFC: integer-typed {0L, 1L} is detected as miscoded", {
+  r <- check_response_coding(
+    make_responses(rep(c(0L, 1L), 50)),
+    method = "2ifc"
+  )
+  expect_equal(r$status, "warn")
+  expect_true(any(grepl("\\{0, 1\\}", r$detail)))
+})
+
 test_that("2IFC: {0, 1} miscoding warns with fix suggestion", {
   r <- check_response_coding(
     make_responses(rep(c(0, 1), 50)),
