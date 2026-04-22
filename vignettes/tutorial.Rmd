@@ -19,34 +19,42 @@ knitr::opts_chunk$set(
 set.seed(1)
 ```
 
-## 1. What this package is (and is not)
+## 1. What this package is
 
-Reverse correlation (RC) experiments produce classification images (CIs)
-and information values (infoVal) that summarise what mental representation
-a participant (or group) holds. These pipelines fail **silently**: a
-miscoded response, a misaligned stimulus number, or a mismatched `.RData`
-file produces CIs that look plausible but are wrong. Statistical reviewers
-and journal readers cannot see these problems.
+Reverse correlation (RC) experiments let you visualise a participant's
+mental representation — for example, what their mental image of
+"trustworthy" looks like — by averaging the noise patterns the
+participant chose across many trials. The end product is a
+**classification image (CI)**, and a common summary of the CI's quality
+is the **information value (infoVal)**: roughly, how much real signal is
+in the CI versus chance (Brinkman et al., 2017, 2019).
 
-`rcicrdiagnostics` is a pre-flight data-quality battery. Run it **before**
-you compute a single CI. If a check fails, fix the data; if a check warns,
-investigate; if every check passes, you can proceed to CI generation and
-infoVal analysis with confidence that the mechanics are sound.
+These pipelines can fail quietly. A response column coded `{0, 1}`
+instead of `{-1, 1}`, a stimulus-number column that is off by one, a
+noise-matrix file whose dimensions don't match the response data — any
+of these produces a CI that *looks* plausible but is wrong. R doesn't
+catch these problems and neither does the `rcicr` package, because the
+errors live in the *match* between your response data and the files that
+generated the stimuli.
 
-The package **is** a diagnostic tool for already-collected RC data. It is
-not:
+`rcicrdiagnostics` is a set of checks you run on your data **before**
+computing any CI or infoVal. If a check fails, fix the data; if it
+warns, investigate; if everything passes, you can compute CIs knowing
+the basic data mechanics are in order.
 
-- an implementation of CI generation (use [`rcicr`][rcicr] for that),
-- an experiment-generation toolkit,
-- a general-purpose data-validation framework.
+The package supports two pipelines through a single `method` argument:
 
-Two RC pipelines are supported through a single `method` argument:
+- **`"2ifc"`** — the standard two-image forced-choice pipeline, as
+  implemented by the [`rcicr`][rcicr] package (Dotsch, 2016). On each
+  trial the participant picks one of two noisy faces.
+- **`"briefrc"`** — the Brief Reverse Correlation pipeline
+  (Schmitz et al., 2024). On each trial the participant picks one noisy
+  face out of 6 or 12. CIs are computed by direct noise-matrix
+  multiplication rather than by reconstructing sinusoids from a
+  generating `.RData` file (so there is no `.RData` file for briefRC).
 
-- **`"2ifc"`** — standard two-image forced-choice, the pipeline implemented
-  by [`rcicr`][rcicr].
-- **`"briefrc"`** — the Brief-RC pipeline of Schmitz et al. (2024), which
-  presents 6 or 12 noisy faces per trial and uses direct noise-matrix
-  multiplication instead of sinusoid reconstruction.
+You only need to know *your* pipeline to use this package. The checks
+use the right logic automatically once you set `method`.
 
 [rcicr]: https://github.com/rdotsch/rcicr
 
@@ -56,30 +64,32 @@ Two RC pipelines are supported through a single `method` argument:
 
 R 4.1 or newer.
 
-### Required packages (installed automatically)
+### Packages installed automatically
 
-`rcicrdiagnostics` imports only two packages, both on CRAN:
+`rcicrdiagnostics` has only two hard dependencies, both on CRAN:
 
-- [`data.table`](https://rdatatable.gitlab.io/data.table/) — fast data
-  manipulation and CSV / noise-matrix reading.
-- [`cli`](https://cli.r-lib.org/) — formatted console messages and errors.
+- [`data.table`](https://rdatatable.gitlab.io/data.table/) — a fast
+  alternative to base R's `data.frame`, used internally for counting
+  and grouping. You don't need to learn its syntax to use this package.
+- [`cli`](https://cli.r-lib.org/) — used to format console messages
+  with colour.
 
 ### Optional packages
 
-- [`rcicr`](https://github.com/rdotsch/rcicr) — needed for the 2IFC
-  infoVal and CI-generation–dependent checks (not included in this
-  release, see Section 9). Install from GitHub:
+- [`rcicr`](https://github.com/rdotsch/rcicr) — only needed once the
+  CI-generation–dependent checks land (see Section 9). Install from
+  GitHub:
 
     ```r
     remotes::install_github("rdotsch/rcicr")
     ```
 
-- `testthat`, `knitr`, `rmarkdown`, `withr` — only needed if you are
-  building the package or its tests locally.
+- `testthat`, `knitr`, `rmarkdown`, `withr` — only needed to build the
+  package or its vignettes locally.
 
 ### Installing the package
 
-`rcicrdiagnostics` is distributed from GitHub:
+`rcicrdiagnostics` is distributed from GitHub (not CRAN):
 
 ```r
 # install.packages("remotes")
@@ -93,52 +103,56 @@ Or with `pak`:
 pak::pak("olivethree/rcicrdiagnostics")
 ```
 
-To confirm the install, load the package and print its version:
+Confirm it loaded:
 
 ```{r load, message = FALSE}
 library(rcicrdiagnostics)
 packageVersion("rcicrdiagnostics")
 ```
 
-## 3. The data the package expects
+## 3. What data the package expects
 
 ### Response data (both pipelines)
 
-A trial-level data frame (or CSV you will read) with at minimum these
-columns:
+A trial-level data frame — one row per trial — that you either load
+from a CSV or build in R. At minimum it needs:
 
-| Column           | Purpose                                                   |
-| ---------------- | --------------------------------------------------------- |
-| `participant_id` | Identifier for each participant. Character or integer.    |
-| `stimulus`       | Stimulus number for that trial (indexes into noise/RData). |
-| `response`       | The participant's response. Coding depends on `method`.   |
-| `rt` (optional)  | Response time in milliseconds. Used by future RT checks.  |
+| Column           | Purpose                                                             |
+| ---------------- | ------------------------------------------------------------------- |
+| `participant_id` | Identifier for each participant. Character or integer is fine.      |
+| `stimulus`       | The stimulus number for that trial. Must match the numbering used when the stimuli were generated. |
+| `response`       | The participant's response on that trial. Coding depends on method. |
+| `rt` (optional)  | Response time in milliseconds. Used by future RT checks.            |
 
-Column names can be overridden via `col_participant`, `col_stimulus`,
-`col_response`, and `col_rt` in every function.
+If your column names differ, every function accepts overrides via
+`col_participant`, `col_stimulus`, `col_response`, and `col_rt`.
 
 ### Response coding by method
 
-- **`"2ifc"`**: `response` must be numeric `{-1, 1}`. The two common
-  miscodes — `{0, 1}` and `{1, 2}` — are detected explicitly with a
-  suggested fix. See Section 6.1.
+- **`"2ifc"`**: `response` must be numeric `{-1, 1}`. The sign matters
+  because the CI is a weighted sum of the per-trial noise patterns:
+  a `+1` means the noise on that trial is added to the CI, a `-1` means
+  it's subtracted. If responses are coded `{0, 1}` instead, the "subtract"
+  information is lost and the CI comes out close to blank. This is one
+  of the most common silent failures in RC data; Section 6.1 detects it.
 - **`"briefrc"`**: `response` may be `{-1, 1}` **or** continuous weights
-  (e.g. the one-hot choice, or aggregated per-stimulus weights). Any
-  finite numeric is accepted.
+  (e.g. one-hot per trial, or aggregated per-stimulus weights). Any
+  finite numeric value is accepted.
 
 ### Auxiliary inputs by method
 
-- **2IFC** needs the `.RData` file from `rcicr::generateStimuli2IFC()`
-  (argument: `rdata`) and the base image file.
-- **Brief-RC** needs a noise-matrix text file (argument: `noise_matrix`)
-  with pixels as rows and stimuli as columns, and a base image file.
-  For 128×128 images and 300 stimuli the matrix is 16 384 rows ×
-  300 columns.
+- **2IFC** uses the `.RData` file produced by
+  `rcicr::generateStimuli2IFC()` plus the base image (the neutral face
+  the noise was added to). Pass these as `rdata` and `base_image`.
+- **Brief-RC** uses a **noise matrix**: a plain-text file with pixels
+  as rows and stimuli as columns, each cell a real-valued noise weight.
+  For 128×128 images and 300 stimuli, the matrix is 16 384 rows ×
+  300 columns. Pass as `noise_matrix`.
 
-## 4. Your first diagnostic run
+## 4. A first diagnostic run
 
-Here is a synthetic 2IFC dataset — three participants, one hundred trials
-each, responses drawn uniformly from `{-1, 1}`:
+Here is a small synthetic 2IFC dataset — three participants, one hundred
+trials each, responses drawn uniformly from `{-1, 1}`:
 
 ```{r toy-2ifc}
 responses <- data.frame(
@@ -149,52 +163,56 @@ responses <- data.frame(
 head(responses)
 ```
 
-Run the full battery:
+Run the full set of checks:
 
 ```{r run-2ifc}
 report <- run_all_checks(responses, method = "2ifc")
 report
 ```
 
-That output is the primary artefact of the package: one line per check,
-colour-coded by status, plus an inventory of checks that are not yet
-implemented.
+That printout is what the package produces for you: one line per check,
+a coloured tag (green `[PASS]`, yellow `[WARN]`, red `[FAIL]`, grey
+`[SKIP]` on colour-capable consoles), and a short explanation.
 
-## 5. The result object: `rcdiag_result`
+## 5. The result object
 
-Every individual check returns an object of class `rcdiag_result`. You
-can inspect the underlying list:
+Every single check returns a small list with a fixed shape. The package
+gives this shape a class name — `rcdiag_result` — so that printing and
+other helpers know how to handle it:
 
 ```{r inspect-result}
 r <- check_response_coding(responses, method = "2ifc")
 str(r, max.level = 1)
 ```
 
-Four fields:
+Four fields you can read directly:
 
-- `status` — one of `"pass"`, `"warn"`, `"fail"`, `"skip"`. Interpret
-  as: move on, investigate, stop and fix, not run.
-- `label` — short one-liner describing the check.
-- `detail` — character vector of diagnostic lines to show the user.
-- `data` — optional list of supporting data (flagged participants, count
-  tables, group statistics). Structure depends on the check.
+- `status` — one of `"pass"`, `"warn"`, `"fail"`, `"skip"`. Interpret as:
+  move on, investigate, stop and fix, not run.
+- `label` — short description of the check.
+- `detail` — the lines printed under the status tag.
+- `data` — optional supporting data: flagged participants, count tables,
+  group statistics. Useful when you want to programmatically exclude
+  problem participants from the dataset you eventually feed to the CI
+  generator.
 
-`rcdiag_report` is the same idea for a collection of results: it is what
-`run_all_checks()` returns. `summary()` produces a tidy data frame:
+`run_all_checks()` returns a collection of these, wrapped in an
+`rcdiag_report`. `summary()` flattens the collection into a tidy data
+frame — handy if you want to filter or log statuses:
 
 ```{r summary-report}
 summary(report)
 ```
 
-## 6. Check-by-check reference
+## 6. The checks one by one
 
-This section walks through each implemented check. Every example uses
-synthetic data built inline so you can run the vignette end-to-end.
+Every example below uses synthetic data built inline, so you can run
+the whole tutorial start to finish without any external files.
 
 ### 6.1. `check_response_coding()`
 
-Verifies that `response` uses the coding expected by `method`. For
-`"2ifc"` it detects two common miscodes explicitly:
+Verifies the response column is coded as `method` expects. For 2IFC it
+detects the two most common miscodings and suggests the one-line fix.
 
 ```{r coding-ok}
 ok <- data.frame(
@@ -214,19 +232,19 @@ miscoded <- data.frame(
 check_response_coding(miscoded, method = "2ifc")
 ```
 
-The `{0, 1}` miscoding returns a **warn** with a concrete fix
+The `{0, 1}` miscoding returns **warn** with the recoding formula
 (`responses$response <- responses$response * 2 - 1`). The `{1, 2}`
-miscoding returns the analogous fix for its coding.
-
-For `method = "briefrc"`, any finite numeric passes; `NA` values produce
-a warning.
+miscoding returns the analogous fix. For `method = "briefrc"`, any
+finite numeric passes; `NA` responses produce a warning so you can
+decide whether to drop or impute them.
 
 ### 6.2. `check_trial_counts()`
 
-Counts trials per participant and, if `expected_n` is supplied, flags
-participants whose count does not match. `expected_n` can be a scalar
-(every participant should have this many trials) or a vector (designs
-with multiple trial-count conditions, e.g. `c(300, 500, 1000)`).
+Counts trials per participant. If you pass `expected_n`, it flags
+participants whose count doesn't match. `expected_n` can be a single
+number (everyone should have the same number of trials) or a vector of
+allowed counts (for designs with multiple trial-count conditions, e.g.
+`c(300, 500, 1000)`).
 
 ```{r counts-pass}
 three_hundred_each <- data.frame(
@@ -246,19 +264,22 @@ with_a_short_participant <- data.frame(
 check_trial_counts(with_a_short_participant, expected_n = 300)
 ```
 
-The cutoff is graduated: a single off-count participant produces **warn**;
-more than 10% off-count produces **fail**. Pass `expected_n = NULL`
-(default) to get a distribution report without flagging.
+A single off-count participant is **warn**; more than 10% of
+participants off-count is **fail** (the logic: one odd participant may
+be excludable, but a systemic mismatch means your merge or filter logic
+is probably wrong). Leave `expected_n = NULL` (the default) to get a
+count distribution without flagging anything.
 
 ### 6.3. `check_duplicates()`
 
-Flags two distinct kinds of duplicates:
+Duplicate rows almost always indicate a merge bug (for example, two
+partial exports of the same participant concatenated together). Two
+cases are flagged separately:
 
-1. **Fully duplicated rows** — every column identical. Almost always a
-   merge bug.
-2. **`(participant, stimulus)` pair duplicates** — same participant, same
-   stimulus, but different response or RT. May be legitimate (design
-   repeats) or a pipeline gluing two runs for one participant.
+1. **Fully duplicated rows** — every column identical. Unambiguously bad.
+2. **`(participant, stimulus)` pair duplicates** — same participant,
+   same stimulus, but different response or RT. Could be legitimate if
+   your design deliberately repeats stimuli, or could be a merge error.
 
 ```{r dup}
 with_a_dup <- data.frame(
@@ -271,13 +292,16 @@ check_duplicates(with_a_dup)
 
 ### 6.4. `check_response_bias()`
 
-Two kinds of bias:
+Two kinds of bias are reported:
 
-- **Constant response** — a participant whose every trial has the same
-  value. Status: **fail**.
-- **Extreme mean response** — a participant whose `|mean(response)|`
-  exceeds `bias_threshold` (default `0.6`, equivalent to roughly 80/20 for
-  binary coding). Status: **warn**.
+- **Constant responders** — a participant who gave the same response on
+  every trial. These are almost always bad data (disengaged participant
+  or a coding bug) because their "signal" contribution is constant and
+  does nothing except scale the base image. Status: **fail**.
+- **Extremely biased participants** — those whose mean response is far
+  enough from zero that you probably can't trust the CI. The threshold
+  is `|mean| > bias_threshold`, default `0.6`. For binary `{-1, 1}`
+  coding this corresponds to roughly an 80/20 split. Status: **warn**.
 
 ```{r bias}
 with_a_constant_responder <- data.frame(
@@ -293,46 +317,50 @@ with_a_constant_responder <- data.frame(
 check_response_bias(with_a_constant_responder)
 ```
 
-The `data$per_participant` element of the returned object contains the
-full per-participant breakdown — trial counts, means, and flags — which
-you can use directly to exclude problematic participants:
+The per-participant breakdown is stored on the result so you can filter
+your dataset directly without re-computing:
 
 ```{r bias-data}
 r <- check_response_bias(with_a_constant_responder)
 r$data$per_participant
 ```
 
-### 6.5. Noise-matrix utilities (Brief-RC)
+### 6.5. Noise matrix (Brief-RC)
 
-Use `read_noise_matrix()` to read a space-delimited txt file into a
-numeric matrix. For demonstration, we build a small matrix and validate
-it:
+`read_noise_matrix()` reads a space-delimited text file into a numeric
+matrix. For a self-contained example we just build one in memory and
+validate it:
 
 ```{r noise}
 mat <- matrix(rnorm(16384 * 5, sd = 0.05), nrow = 16384, ncol = 5)
 validate_noise_matrix(mat, expected_pixels = 16384, expected_stimuli = 5)
 ```
 
-Supplying the wrong expected dimensions returns **fail** with a specific
-message. Non-finite entries (`NA`, `NaN`, `Inf`) also fail.
+The validator checks the dimensions (one row per pixel, one column per
+stimulus) and that no cell is `NA`, `NaN`, or `Inf`. Supplying the wrong
+expected dimensions returns **fail** with a specific message. A lot of
+early-pipeline errors surface here — confusing pixel count with stimulus
+count, saving the matrix with an unexpected delimiter, and so on.
 
 ### 6.6. Loading response data from disk
 
-`load_responses()` is a thin wrapper around `data.table::fread()` that
-validates column presence. Use it on your real data file:
+`load_responses()` is a thin wrapper around `data.table::fread()` (a
+fast CSV reader) that checks the required columns are present. Use it
+on your real data file:
 
 ```r
 responses <- load_responses("my_data.csv", method = "2ifc")
 ```
 
-It returns a `data.table`. You can pass that directly to any check
-function (a `data.table` is also a `data.frame`).
+It returns a `data.table`, which behaves like a regular `data.frame`
+for the check functions — you don't need to learn a new syntax.
 
-## 7. The `run_all_checks()` orchestrator
+## 7. `run_all_checks()`
 
-`run_all_checks()` dispatches the full battery and returns an
-`rcdiag_report`. It auto-detects `method` when you supply exactly one of
-`rdata` or `noise_matrix`:
+`run_all_checks()` runs every implemented check in one call and returns
+the collected `rcdiag_report`. It works out the `method` automatically
+when exactly one of `rdata` or `noise_matrix` is supplied, so you
+usually don't need to set `method` yourself:
 
 ```{r run-auto, eval = FALSE}
 # Auto-detected as "2ifc" because rdata is supplied:
@@ -342,14 +370,14 @@ run_all_checks(responses, rdata = "stimuli.RData")
 run_all_checks(responses, noise_matrix = "noise_matrix_128.txt")
 ```
 
-Pass `method` explicitly when you do not have either file on hand (for
-example, for a quick sanity check on response data alone):
+Pass `method` explicitly when you have neither file on hand — for
+example, to sanity-check the response CSV by itself:
 
 ```{r run-explicit}
 run_all_checks(responses, method = "2ifc")
 ```
 
-Forward per-check options through the orchestrator:
+Per-check options are passed through:
 
 ```{r run-threshold}
 run_all_checks(
@@ -359,77 +387,90 @@ run_all_checks(
 )
 ```
 
-The report's `$results` element gives you programmatic access:
+For programmatic access, the individual results live under
+`report$results`:
 
 ```{r results-list}
 report <- run_all_checks(responses, method = "2ifc")
 vapply(report$results, `[[`, character(1), "status")
 ```
 
-## 8. Interpreting the report
+## 8. Reading the report
 
 Four statuses:
 
 - **pass** (green) — the check saw nothing unusual. Continue.
-- **warn** (yellow) — the check saw something worth investigating but
-  not always fatal (e.g. one duplicate row, a known miscoding with a
-  suggested fix). Look at `$data` and decide.
-- **fail** (red) — the check saw something that will corrupt downstream
-  CIs or infoVal if you ignore it. Fix before proceeding.
-- **skip** (grey) — the check did not run. Currently reserved; the
-  `skipped_checks` list in the report names the checks that are not yet
-  implemented in this release.
+- **warn** (yellow) — something worth investigating but not necessarily
+  fatal (e.g. one duplicate row, a known miscoding with a suggested
+  fix). Look at `$data` and decide.
+- **fail** (red) — something that will corrupt downstream CIs or infoVal
+  if you ignore it. Fix before proceeding.
+- **skip** (grey) — the check didn't run. In this release that means
+  "not yet implemented" — see Section 9.
 
-A principled workflow:
+A practical workflow:
 
 1. Run `run_all_checks()` once on the raw data.
-2. Resolve every **fail** before anything else.
-3. Investigate every **warn** — either fix, or record an explicit note
-   in your analysis script saying why the warn is acceptable.
-4. Only after every check is **pass** (or consciously accepted **warn**),
-   proceed to `rcicr::generateCI2IFC()` (2IFC) or your Brief-RC CI code.
+2. Resolve every **fail** first.
+3. Investigate every **warn**. Either fix it, or add a short note in
+   your analysis script saying why the warning is acceptable for this
+   dataset (so you or a collaborator don't re-investigate later).
+4. Only once every check is **pass** — or a consciously accepted
+   **warn** — move on to `rcicr::generateCI2IFC()` (2IFC) or your
+   Brief-RC CI code.
 
 ## 9. Checks not yet implemented
 
-Six checks are in the package as named functions but are not yet
-implemented. Calling them directly aborts with an informative error,
-and `run_all_checks()` skips them and lists them under
-`report$skipped_checks`.
+Six checks are defined as named functions but not yet implemented.
+Calling them directly stops with an informative error, and
+`run_all_checks()` lists them under `report$skipped_checks` without
+trying to run them.
 
-- `check_response_inversion()` — compares infoVal with original vs
-  flipped response codes; flags data that looks inverted.
-- `check_stimulus_alignment()` — verifies stimulus numbers align with
-  the `.RData` parameters (2IFC) or noise-matrix columns (briefRC).
-- `check_rt()` — RT distributional checks (too-fast responders,
-  low within-participant variability).
-- `check_version_compat()` — rcicr version of `.RData` vs installed
-  rcicr version.
-- `compute_infoval_summary()` — batch per-participant infoVal with
-  descriptive statistics.
+- `check_response_inversion()` — compute the CI twice (with original
+  and flipped response codes) and compare infoVal. Flags data that
+  looks inverted.
+- `check_stimulus_alignment()` — verify stimulus numbers line up with
+  the parameters in the `.RData` (2IFC) or the columns of the noise
+  matrix (briefRC).
+- `check_rt()` — RT distributional checks (implausibly fast responses,
+  very low within-participant variability).
+- `check_version_compat()` — the `rcicr` version that produced the
+  `.RData` versus the installed version.
+- `compute_infoval_summary()` — per-participant infoVal with descriptive
+  statistics and flags (Mangini & Biederman, 2004; Brinkman et al., 2019).
 - `cross_validate_rt_infoval()` — correlate infoVal with RT quality
-  metrics to detect fast-and-confident false positives.
+  metrics to spot fast-and-confident false positives.
 
-These depend on CI generation (via `rcicr` for 2IFC, or a standalone
-permutation-based infoVal for briefRC) which is a separate implementation
-effort. Progress is tracked in the package's GitHub issues.
+These all depend on CI generation: via `rcicr` for 2IFC, or a
+permutation-based infoVal for briefRC. Both are non-trivial and are
+deliberately postponed to a later release rather than shipped as
+potentially-wrong statistics.
 
 ## 10. Next steps
 
-- **Real example data**: the `data-raw/` directory contains stubs for
+- **Example datasets**: the `data-raw/` folder contains stubs for
   `generate_example_2ifc.R` and `generate_example_briefrc.R`. Running
-  these will populate `inst/extdata/` with a reproducible RC dataset
-  that you can practise on.
-- **Pipeline-specific vignettes**: once the CI-generation-dependent
+  these will populate `inst/extdata/` with a reproducible synthetic
+  RC dataset you can practise on.
+- **Pipeline-specific quickstarts**: once the CI-generation–dependent
   checks land, separate `quickstart-2ifc` and `quickstart-briefrc`
-  vignettes will walk through the full analysis pipeline end-to-end.
-- **A Quarto ebook**: this tutorial is written in R Markdown and maps
-  cleanly to Quarto; a standalone ebook version is planned.
+  vignettes will walk through the full pipeline end to end.
+- **A Quarto ebook version**: this tutorial is written in R Markdown
+  and maps cleanly to Quarto; a standalone ebook version is planned.
 
 ## 11. References
 
-- Dotsch, R. (2016). `rcicr`: Reverse-correlation image-classification
-  toolbox. <https://github.com/rdotsch/rcicr>
-- Schmitz, M., et al. (2024). Brief reverse correlation.
-- Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit:
-  Estimating the information employed for face classifications.
-  *Cognitive Science*, 28(2), 209–226.
+Brinkman, L., Goffin, S., van de Schoot, R., Visser, I., Derks, D., & Dotsch, R. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*, 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
+
+Brinkman, L., Todorov, A., & Dotsch, R. (2017). Visualising mental representations: A primer on noise-based reverse correlation in social psychology. *European Review of Social Psychology*, *28*(1), 333–361. https://doi.org/10.1080/10463283.2017.1381469
+
+Dotsch, R. (2016). *rcicr: Reverse-correlation image-classification toolbox* [R package]. https://github.com/rdotsch/rcicr
+
+Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit: Estimating the information employed for face classifications. *Cognitive Science*, *28*(2), 209–226. https://doi.org/10.1016/j.cogsci.2003.11.004
+
+Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief reverse correlation: An improved tool to assess visual representations. *European Journal of Social Psychology*. Advance online publication. https://doi.org/10.1002/ejsp.3100
+
+## 12. Authorship
+
+Developed by M. Oliveira with Claude (Anthropic) assistance.
+M. Oliveira is responsible for the content.
