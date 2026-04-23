@@ -112,7 +112,7 @@ If you use the Brief-RC pipeline, also cite:
 
 ## License
 
-Released under CC0 1.0 Universal. See [LICENSE](LICENSE).
+Released under the MIT License. See [LICENSE](LICENSE) (copyright notice) and [LICENSE.md](LICENSE.md) (full text).
 
 ## Author
 
