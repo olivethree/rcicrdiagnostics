@@ -1,0 +1,259 @@
+# rcicrdiagnostics
+
+A toolkit for data-quality diagnostics in reverse correlation
+experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
+
+> **Status:** in development. The API is not yet stable and the package
+> is not on CRAN. Distribution is GitHub-only.
+
+## What it does
+
+Reverse correlation pipelines fail silently. Miscoded responses,
+misaligned stimulus numbers, mismatched `.RData` parameter files, and
+malformed noise matrices all produce CIs and infoVal scores that look
+plausible but are wrong. `rcicrdiagnostics` provides a systematic
+battery of checks to run *before* interpreting any CI or computing
+reliability.
+
+It supports both pipelines through a single `method` argument:
+
+- **2IFC** — the standard two-image forced-choice pipeline, using the
+  [`rcicr`](https://github.com/rdotsch/rcicr) package for CI and
+  infoVal.
+- **Brief-RC** — the Schmitz et al. (2024) multi-alternative variant,
+  which uses direct noise-matrix multiplication and ships no `.RData`
+  file.
+
+Exported functions fall into three families:
+
+- `check_*()` — individual diagnostics (response coding, stimulus
+  alignment, trial counts, duplicates, response bias, RT, version
+  compatibility, response inversion).
+- `compute_*()` — summary computations (batch infoVal with flags, RT ×
+  infoVal cross-validation).
+- [`run_diagnostics()`](https://olivethree.github.io/rcicrdiagnostics/reference/run_diagnostics.md)
+  — orchestrator that runs the full battery and returns a formatted
+  pass/warn/fail report.
+
+## Installation
+
+From GitHub (primary):
+
+``` r
+# install.packages("remotes")
+remotes::install_github("olivethree/rcicrdiagnostics")
+```
+
+Or with `pak`:
+
+``` r
+# install.packages("pak")
+pak::pak("olivethree/rcicrdiagnostics")
+```
+
+`rcicr` (Dotsch, 2016) is a **Suggests** dependency needed only for the
+2IFC infoVal-based checks. Brief-RC users do not need it; the Brief-RC
+infoVal path is intentionally skipped in this package (a proper Brief-RC
+infoVal implementation is planned for the companion `rcicrely`). To
+install `rcicr`, follow Dotsch’s own instructions:
+
+``` r
+# Stable release (CRAN):
+install.packages("rcicr")
+
+# Or latest development version from GitHub:
+install.packages("devtools")
+devtools::install_github("rdotsch/rcicr")
+```
+
+## Quick start
+
+The expected inputs are a **response CSV** (columns `participant_id`,
+`stimulus`, `response`, optionally `rt`; response coding `{-1, +1}`)
+plus one auxiliary file per pipeline: an rcicr stimulus `.RData` for
+2IFC, or a space-delimited noise matrix for Brief-RC. See the [user’s
+guide](https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.html)
+for full column specifications.
+
+### With your own data
+
+``` r
+library(rcicrdiagnostics)
+
+# --- 2IFC ---
+responses <- read.csv("path/to/your/responses.csv")
+report    <- run_diagnostics(
+  responses,
+  method = "2ifc",
+  rdata  = "path/to/your/rcicr_stimuli.RData",
+  col_rt = "rt"   # omit if you do not have reaction times
+)
+print(report)
+
+# --- Brief-RC (12 or 20 alternatives; row format is the same) ---
+responses <- read.csv("path/to/your/responses.csv")
+report    <- run_diagnostics(
+  responses,
+  method       = "briefrc",
+  noise_matrix = "path/to/your/noise_matrix.txt",
+  col_rt       = "rt"
+)
+print(report)
+```
+
+### Try it on synthetic data (no real study needed)
+
+The package ships runnable example scripts under `inst/examples/` that
+generate a small synthetic dataset for each pipeline and demonstrate the
+diagnostic battery end-to-end. They use an AI-generated base face (from
+*thispersondoesnotexist.com*; no real person depicted).
+
+``` r
+library(rcicrdiagnostics)
+
+# Where to put the generated files (default is a tempdir folder).
+OUTPUT_DIR <- file.path(getwd(), "rcicrdiag-demo")
+
+# Generate stimuli (~30–60 s) and bogus responses, then run diagnostics
+# on each pipeline:
+source(system.file("examples", "01_generate_stimuli.R",           package = "rcicrdiagnostics"))
+source(system.file("examples", "02a_bogus_responses_2ifc.R",      package = "rcicrdiagnostics"))
+source(system.file("examples", "02b_bogus_responses_briefrc12.R", package = "rcicrdiagnostics"))
+source(system.file("examples", "02c_bogus_responses_briefrc20.R", package = "rcicrdiagnostics"))
+source(system.file("examples", "03_run_diagnostics_demo.R",       package = "rcicrdiagnostics"))
+```
+
+See
+[`inst/examples/README.md`](https://olivethree.github.io/rcicrdiagnostics/inst/examples/README.md)
+for what each script does, expected runtimes, and the participant “truth
+tables” that let you confirm the checks flagged the right participants.
+
+## Tutorial
+
+A comprehensive walk-through covering installation, data format
+requirements, every implemented function, and how to interpret the
+report:
+
+- Web:
+  <https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.html>
+
+- Locally, after installation:
+
+  ``` r
+  vignette("tutorial", package = "rcicrdiagnostics")
+  ```
+
+## Documentation
+
+Full function reference:
+<https://olivethree.github.io/rcicrdiagnostics/>
+
+Pipeline-specific quickstarts (`quickstart-2ifc`, `quickstart-briefrc`)
+are planned once the CI-generation–dependent checks land.
+
+## Citation
+
+If you use `rcicrdiagnostics` in your research, please cite it as:
+
+> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for
+> Reverse Correlation Experiments* (R package version 0.0.0.9000).
+> <https://github.com/olivethree/rcicrdiagnostics>
+
+A BibTeX entry and up-to-date version string are available via:
+
+``` r
+citation("rcicrdiagnostics")
+```
+
+A Zenodo DOI will be added at first tagged release.
+
+Please also cite the methodological sources appropriate to your
+pipeline:
+
+- **2IFC**: Dotsch (2016), Brinkman et al. (2019) for infoVal
+- **Brief-RC**: Schmitz, Rougier, and Yzerbyt (2024)
+
+Full references are listed at the end of the
+[tutorial](https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.html).
+
+## License
+
+Released under the MIT License. See
+[LICENSE](https://olivethree.github.io/rcicrdiagnostics/LICENSE)
+(copyright notice) and
+[LICENSE.md](https://olivethree.github.io/rcicrdiagnostics/LICENSE.md)
+(full text).
+
+## Credits
+
+Manuel Oliveira — <https://www.manueloliveira.nl>. Development was
+assisted by Claude (Anthropic); the author is responsible for all
+content and decisions.
+
+# Package index
+
+## All functions
+
+- [`check_duplicates()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_duplicates.md)
+  : Check for duplicate rows in response data
+
+- [`check_response_bias()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_bias.md)
+  : Check for response bias
+
+- [`check_response_coding()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_coding.md)
+  : Check that response values use the expected coding
+
+- [`check_response_inversion()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_inversion.md)
+  : Detect response-code inversion
+
+- [`check_rt()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_rt.md)
+  : Response-time distributional checks
+
+- [`check_stimulus_alignment()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_stimulus_alignment.md)
+  : Check stimulus ids align with the stimulus pool
+
+- [`check_trial_counts()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_trial_counts.md)
+  : Check trial counts per participant
+
+- [`check_version_compat()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_version_compat.md)
+  : Check rcicr version compatibility with a 2IFC rdata file
+
+- [`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)
+  : Per-participant information-value (infoVal) summary
+
+- [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md)
+  : Cross-validate infoVal against RT quality
+
+- [`is_rcdiag_result()`](https://olivethree.github.io/rcicrdiagnostics/reference/is_rcdiag_result.md)
+  :
+
+  Test whether an object is an `rcdiag_result`
+
+- [`load_responses()`](https://olivethree.github.io/rcicrdiagnostics/reference/load_responses.md)
+  : Load reverse correlation response data from a CSV file
+
+- [`rcdiag_report()`](https://olivethree.github.io/rcicrdiagnostics/reference/rcdiag_report.md)
+  :
+
+  Construct an `rcdiag_report` object
+
+- [`rcdiag_result()`](https://olivethree.github.io/rcicrdiagnostics/reference/rcdiag_result.md)
+  :
+
+  Construct an `rcdiag_result` object
+
+- [`read_noise_matrix()`](https://olivethree.github.io/rcicrdiagnostics/reference/read_noise_matrix.md)
+  : Read a Brief-RC noise matrix text file
+
+- [`run_diagnostics()`](https://olivethree.github.io/rcicrdiagnostics/reference/run_diagnostics.md)
+  : Run the full battery of diagnostic checks
+
+- [`validate_noise_matrix()`](https://olivethree.github.io/rcicrdiagnostics/reference/validate_noise_matrix.md)
+  : Validate a Brief-RC noise matrix
+
+# Articles
+
+### All vignettes
+
+- [rcicrdiagnostics: user's
+  guide](https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.md):
