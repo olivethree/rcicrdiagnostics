@@ -54,6 +54,18 @@ check_response_inversion <- function(responses,
   method <- match.arg(method)
   label  <- "Response inversion"
 
+  if (method == "briefrc") {
+    return(rcdiag_result(
+      "skip", label,
+      c(
+        "Response-inversion detection is not supported for Brief-RC in",
+        "rcicrdiagnostics. It depends on compute_infoval_summary(), which",
+        "is not implemented for Brief-RC (see that function's help)."
+      ),
+      data = list(method = "briefrc")
+    ))
+  }
+
   original <- compute_infoval_summary(
     responses, method = method, rdata = rdata, baseimage = baseimage,
     col_participant = col_participant, col_stimulus = col_stimulus,
@@ -89,7 +101,10 @@ check_response_inversion <- function(responses,
 
   detail <- c(
     sprintf(
-      "%d of %d participants have flipped infoVal exceeding original by >= %.2f.",
+      paste(
+        "%d of %d participants have flipped infoVal exceeding",
+        "original by >= %.2f."
+      ),
       n_inv, n_p, margin
     ),
     if (n_inv > 0L) {

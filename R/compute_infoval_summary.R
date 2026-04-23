@@ -1,49 +1,57 @@
 #' Per-participant information-value (infoVal) summary
 #'
-#' Computes the information value (infoVal; Brinkman et al., 2019) for
-#' every participant and returns a pass / warn / fail summary plus a
+#' Computes the information value (infoVal; Brinkman et al., 2019) for every
+#' participant and returns a pass / warn / fail summary plus a
 #' per-participant table flagging those below the `threshold`.
 #'
 #' infoVal is a z-like score describing how far a participant's
 #' classification image (CI) is from a null-response reference
-#' distribution. Values around or below `1.96` are effectively
+#' distribution. Values at or below `1.96` are effectively
 #' indistinguishable from noise; higher values indicate meaningful
 #' signal.
 #'
-#' This function delegates the heavy lifting to the `rcicr` package
-#' ([`rcicr::batchGenerateCI2IFC()`][rcicr::batchGenerateCI2IFC] and
-#' [`rcicr::computeInfoVal2IFC()`][rcicr::computeInfoVal2IFC] for 2IFC;
-#' the corresponding `*_brief` functions for Brief-RC). It is therefore
-#' only runnable with `rcicr` installed and with the `rdata` file that
-#' produced the stimuli.
+#' The 2IFC path delegates to [`rcicr::batchGenerateCI2IFC()`] and
+#' [`rcicr::computeInfoVal2IFC()`] from the canonical `rcicr` package
+#' (Dotsch, 2016; v1.0.1 on GitHub as of 2023). Canonical `rcicr` does
+#' not expose Brief-RC-specific CI or infoVal functions, so the Brief-RC
+#' path returns a `"skip"` result. A correct Brief-RC infoVal requires
+#' a reference distribution matched to each participant's trial count
+#' (not the pool size stored in the rdata), and implementing that
+#' correctly is deferred to the companion `rcicrely` package.
 #'
-#' **Side effect.** rcicr caches a reference distribution inside the
-#' supplied `rdata` file on the first call. Subsequent calls reuse it
-#' and run much faster. Copy your `rdata` file beforehand if you want
-#' the original untouched.
+#' **Side effect (2IFC).** `rcicr` caches a reference distribution inside
+#' the supplied `rdata` file on the first call. Subsequent calls reuse
+#' it. Copy your `rdata` beforehand if you want the original untouched.
 #'
 #' @param responses A data frame of trial-level responses.
-#' @param method `"2ifc"` or `"briefrc"`.
+#' @param method `"2ifc"` (supported) or `"briefrc"` (returns `"skip"`).
 #' @param rdata Path to the rcicr `.RData` file that produced the
-#'   stimuli. Required.
+#'   stimuli. Required for 2IFC.
 #' @param baseimage Name of the base image used at generation time
 #'   (the key in `base_face_files` in the rdata). Default `"base"`.
 #' @param col_participant,col_stimulus,col_response Column names.
-#'   `col_response` is used by the 2IFC path only.
 #' @param iter Number of iterations for rcicr's reference-distribution
 #'   simulation. Default `10000` (the rcicr-recommended value).
 #' @param threshold Numeric. Participants with infoVal below this are
-#'   flagged as likely noise. Default `1.96` (a conventional z-threshold
-#'   from Brinkman et al., 2019).
+#'   flagged as likely noise. Default `1.96`.
 #' @param ... Unused.
 #'
-#' @return An [rcdiag_result()] object. `data$per_participant` has one
-#'   row per participant with `participant_id`, `infoval`, and
-#'   `meaningful` (logical: `infoval >= threshold`).
+#' @return An [rcdiag_result()] object. For 2IFC, `data$per_participant`
+#'   has one row per participant with `participant_id`, `infoval`, and
+#'   `meaningful` (logical: `infoval >= threshold`). For Brief-RC, a
+#'   `"skip"` result with an explanatory message.
+#'
+#' @references
+#' Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch,
+#' R., & Aarts, H. (2019). Quantifying the informational value of
+#' classification images. *Behavior Research Methods*, 51(5), 2059--2073.
+#'
+#' Dotsch, R. (2016). *rcicr: Reverse-correlation image-classification
+#' toolbox* \[R package\].
+#' \url{https://github.com/rdotsch/rcicr}
 #'
 #' @examples
 #' \dontrun{
-#' # Requires rcicr and a 2IFC rdata file
 #' compute_infoval_summary(
 #'   responses, method = "2ifc",
 #'   rdata = "stimuli.RData",
@@ -63,6 +71,23 @@ compute_infoval_summary <- function(responses,
                                     threshold = 1.96,
                                     ...) {
   method <- match.arg(method)
+  label  <- "Information value"
+
+  if (method == "briefrc") {
+    return(rcdiag_result(
+      "skip", label,
+      c(
+        "Brief-RC infoVal is not supported by rcicrdiagnostics.",
+        "Canonical rcicr (Dotsch, v1.0.1) does not expose Brief-RC CI or",
+        "infoVal machinery, and a correct Brief-RC infoVal needs a",
+        "reference distribution matched to each participant's trial",
+        "count rather than the rdata pool size. Implementation is",
+        "planned for the companion rcicrely package."
+      ),
+      data = list(method = "briefrc")
+    ))
+  }
+
   if (!requireNamespace("rcicr", quietly = TRUE)) {
     cli::cli_abort(c(
       "Package {.pkg rcicr} is required for {.fn compute_infoval_summary}.",
@@ -73,46 +98,29 @@ compute_infoval_summary <- function(responses,
   validate_responses_df(
     responses, col_participant, col_stimulus, col_response
   )
-  label <- "Information value"
 
-  # rcicr's internals require these packages attached, not just loaded via
-  # ::, because they use %>%, tribble, and %dopar% at evaluation time.
+  # rcicr's 2IFC code uses %dopar%, tribble, and %>% at eval time.
+  # Loading the namespaces isn't enough; they need to be on the search path.
   ensure_attached(c("foreach", "tibble", "dplyr"))
 
   data_df <- as.data.frame(responses)
   tmp_out <- tempfile()
   dir.create(tmp_out, showWarnings = FALSE, recursive = TRUE)
 
-  cis <- switch(
-    method,
-    "2ifc" = rcicr::batchGenerateCI2IFC(
-      data        = data_df,
-      by          = col_participant,
-      stimuli     = col_stimulus,
-      responses   = col_response,
-      baseimage   = baseimage,
-      rdata       = rdata,
-      save_as_png = FALSE,
-      targetpath  = tmp_out
-    ),
-    "briefrc" = rcicr::batchGenerateCI_brief(
-      data      = data_df,
-      by        = col_participant,
-      stimuli   = col_stimulus,
-      responses = col_response,
-      rdata     = rdata
-    )
+  cis <- rcicr::batchGenerateCI2IFC(
+    data        = data_df,
+    by          = col_participant,
+    stimuli     = col_stimulus,
+    responses   = col_response,
+    baseimage   = baseimage,
+    rdata       = rdata,
+    save_as_png = FALSE,
+    targetpath  = tmp_out
   )
-
-  infoval_fn <- if (method == "2ifc") {
-    rcicr::computeInfoVal2IFC
-  } else {
-    rcicr::computeInfoVal_brief
-  }
 
   per_participant <- vapply(
     names(cis),
-    function(nm) infoval_fn(cis[[nm]], rdata, iter = iter),
+    function(nm) rcicr::computeInfoVal2IFC(cis[[nm]], rdata, iter = iter),
     numeric(1L)
   )
   ids <- extract_participant_ids(names(cis), baseimage, col_participant)

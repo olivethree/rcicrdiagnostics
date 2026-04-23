@@ -74,20 +74,31 @@ R 4.1 or newer.
 - [`cli`](https://cli.r-lib.org/) — used to format console messages
   with colour.
 
-### Optional packages (needed only for the infoVal-based checks)
+### Optional packages (needed only for the 2IFC infoVal-based checks)
 
 Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal) delegate
-to the `rcicr` package. If you want to use those three checks, you need:
+the 2IFC path to the canonical `rcicr` package (Dotsch, 2016).
+**They return a `"skip"` result for Brief-RC** — see Section 6.9 for why.
+If you want the 2IFC infoVal checks, install `rcicr`. From Dotsch's own
+install instructions:
 
-- [`rcicr`](https://github.com/rdotsch/rcicr) — install from GitHub:
+```r
+# Latest stable version (from CRAN if still hosted):
+install.packages("rcicr")
 
-    ```r
-    remotes::install_github("rdotsch/rcicr")
-    ```
+# Latest dev version from GitHub:
+install.packages("devtools")
+devtools::install_github("rdotsch/rcicr")
+```
+
+At the time of writing, the canonical `rcicr` is version 1.0.1 (2023),
+maintained by Ron Dotsch on
+[github.com/rdotsch/rcicr](https://github.com/rdotsch/rcicr).
 
 - `foreach`, `tibble`, and `dplyr` — `rcicr` uses operators and helpers
-  from these packages at runtime. The package will attach them for you
-  on the first infoVal-dependent call, but they need to be installed:
+  from these packages at runtime (`%dopar%`, `tribble`, `%>%`). The
+  package will attach them for you on the first infoVal-dependent call,
+  but they need to be installed:
 
     ```r
     install.packages(c("foreach", "tibble", "dplyr"))
@@ -467,12 +478,22 @@ participant's CI is from a null-response reference distribution. Values
 around or below `1.96` are effectively indistinguishable from noise;
 higher values indicate meaningful signal.
 
-The function delegates the heavy lifting to `rcicr`:
-`batchGenerateCI2IFC()` / `computeInfoVal2IFC()` for 2IFC, the
-`*_brief` equivalents for Brief-RC. On the first call `rcicr` simulates
-a reference distribution (10 000 iterations by default — a few minutes)
-and caches it *inside the `.RData` file* so subsequent calls are fast.
-**Copy your `.RData` beforehand if you want the original untouched.**
+The 2IFC path delegates the heavy lifting to the canonical `rcicr`
+package (Dotsch, v1.0.1 at the time of writing): `batchGenerateCI2IFC()`
+to build per-participant CIs and `computeInfoVal2IFC()` to score each
+against a simulated reference distribution. On the first call `rcicr`
+simulates a reference distribution (10 000 iterations by default — a
+few minutes) and caches it *inside the `.RData` file* so subsequent
+calls are fast. **Copy your `.RData` beforehand if you want the
+original untouched.**
+
+**Brief-RC is not currently supported.** Canonical `rcicr` does not
+expose Brief-RC-specific CI or infoVal machinery, and a correct
+Brief-RC infoVal needs a reference distribution matched to each
+participant's trial count rather than the pool size stored in the
+rdata. Calling `compute_infoval_summary(method = "briefrc")` returns
+a `"skip"` result with this explanation; proper Brief-RC infoVal is
+planned for the companion `rcicrely` package.
 
 ```{r infoval, eval = FALSE}
 iv <- compute_infoval_summary(
@@ -657,10 +678,11 @@ full
 # and you get all 10 checks in the report.
 ```
 
-For Brief-RC, swap `rdata` for `noise_matrix` at the `check_stimulus_-
-alignment` step. The infoVal-based checks still need an rcicr-compatible
-`.RData` (produced by `rcicr::generateStimuli_brief()`) plus
-`infoval_iter`; see Section 6.9 for the data-format caveat.
+For Brief-RC, swap `rdata` for `noise_matrix` at the
+`check_stimulus_alignment` step. The infoVal-based checks
+(Sections 6.9–6.11) will each return a `"skip"` result for Brief-RC
+regardless of what you pass — canonical `rcicr` does not ship Brief-RC
+infoVal machinery. See Section 6.9 for the full explanation.
 
 **On the name**: `run_diagnostics()` runs *every check whose required
 inputs are available*, not "every check unconditionally". The printed

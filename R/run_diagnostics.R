@@ -111,7 +111,9 @@ run_diagnostics <- function(responses,
 
   can_infoval <- !is.null(rdata) && !is.null(infoval_iter)
   if (can_infoval) {
-    iv_res <- tryCatch(
+    # Each of these three handles its own Brief-RC skip internally.
+    # The tryCatch here is only for 2IFC error paths (e.g., rcicr failures).
+    results$infoval <- tryCatch(
       compute_infoval_summary(
         responses, method = method, rdata = rdata, baseimage = baseimage,
         col_participant = col_participant, col_stimulus = col_stimulus,
@@ -124,40 +126,37 @@ run_diagnostics <- function(responses,
         )
       }
     )
-    results$infoval <- iv_res
 
-    if (iv_res$status != "skip") {
-      results$response_inversion <- tryCatch(
-        check_response_inversion(
+    results$response_inversion <- tryCatch(
+      check_response_inversion(
+        responses, method = method, rdata = rdata, baseimage = baseimage,
+        col_participant = col_participant, col_stimulus = col_stimulus,
+        col_response = col_response, iter = infoval_iter
+      ),
+      error = function(e) {
+        rcdiag_result(
+          "skip", "Response inversion",
+          c("check_response_inversion failed:", conditionMessage(e))
+        )
+      }
+    )
+
+    if (!is.null(col_rt) && col_rt %in% names(responses)) {
+      results$rt_infoval <- tryCatch(
+        cross_validate_rt_infoval(
           responses, method = method, rdata = rdata, baseimage = baseimage,
           col_participant = col_participant, col_stimulus = col_stimulus,
-          col_response = col_response, iter = infoval_iter
+          col_response = col_response, col_rt = col_rt, iter = infoval_iter
         ),
         error = function(e) {
           rcdiag_result(
-            "skip", "Response inversion",
-            c("check_response_inversion failed:", conditionMessage(e))
+            "skip", "RT vs infoVal",
+            c("cross_validate_rt_infoval failed:", conditionMessage(e))
           )
         }
       )
-
-      if (!is.null(col_rt) && col_rt %in% names(responses)) {
-        results$rt_infoval <- tryCatch(
-          cross_validate_rt_infoval(
-            responses, method = method, rdata = rdata, baseimage = baseimage,
-            col_participant = col_participant, col_stimulus = col_stimulus,
-            col_response = col_response, col_rt = col_rt, iter = infoval_iter
-          ),
-          error = function(e) {
-            rcdiag_result(
-              "skip", "RT vs infoVal",
-              c("cross_validate_rt_infoval failed:", conditionMessage(e))
-            )
-          }
-        )
-      } else {
-        skipped <- c(skipped, "cross_validate_rt_infoval (no col_rt)")
-      }
+    } else {
+      skipped <- c(skipped, "cross_validate_rt_infoval (no col_rt)")
     }
   } else {
     skipped <- c(

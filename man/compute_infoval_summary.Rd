@@ -20,58 +20,57 @@ compute_infoval_summary(
 \arguments{
 \item{responses}{A data frame of trial-level responses.}
 
-\item{method}{\code{"2ifc"} or \code{"briefrc"}.}
+\item{method}{\code{"2ifc"} (supported) or \code{"briefrc"} (returns \code{"skip"}).}
 
 \item{rdata}{Path to the rcicr \code{.RData} file that produced the
-stimuli. Required.}
+stimuli. Required for 2IFC.}
 
 \item{baseimage}{Name of the base image used at generation time
 (the key in \code{base_face_files} in the rdata). Default \code{"base"}.}
 
-\item{col_participant, col_stimulus, col_response}{Column names.
-\code{col_response} is used by the 2IFC path only.}
+\item{col_participant, col_stimulus, col_response}{Column names.}
 
 \item{iter}{Number of iterations for rcicr's reference-distribution
 simulation. Default \code{10000} (the rcicr-recommended value).}
 
 \item{threshold}{Numeric. Participants with infoVal below this are
-flagged as likely noise. Default \code{1.96} (a conventional z-threshold
-from Brinkman et al., 2019).}
+flagged as likely noise. Default \code{1.96}.}
 
 \item{...}{Unused.}
 }
 \value{
-An \code{\link[=rcdiag_result]{rcdiag_result()}} object. \code{data$per_participant} has one
-row per participant with \code{participant_id}, \code{infoval}, and
-\code{meaningful} (logical: \code{infoval >= threshold}).
+An \code{\link[=rcdiag_result]{rcdiag_result()}} object. For 2IFC, \code{data$per_participant}
+has one row per participant with \code{participant_id}, \code{infoval}, and
+\code{meaningful} (logical: \code{infoval >= threshold}). For Brief-RC, a
+\code{"skip"} result with an explanatory message.
 }
 \description{
-Computes the information value (infoVal; Brinkman et al., 2019) for
-every participant and returns a pass / warn / fail summary plus a
+Computes the information value (infoVal; Brinkman et al., 2019) for every
+participant and returns a pass / warn / fail summary plus a
 per-participant table flagging those below the \code{threshold}.
 }
 \details{
 infoVal is a z-like score describing how far a participant's
 classification image (CI) is from a null-response reference
-distribution. Values around or below \code{1.96} are effectively
+distribution. Values at or below \code{1.96} are effectively
 indistinguishable from noise; higher values indicate meaningful
 signal.
 
-This function delegates the heavy lifting to the \code{rcicr} package
-(\code{\link[rcicr:batchGenerateCI2IFC]{rcicr::batchGenerateCI2IFC()}} and
-\code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}} for 2IFC;
-the corresponding \verb{*_brief} functions for Brief-RC). It is therefore
-only runnable with \code{rcicr} installed and with the \code{rdata} file that
-produced the stimuli.
+The 2IFC path delegates to \code{\link[rcicr:batchGenerateCI2IFC]{rcicr::batchGenerateCI2IFC()}} and
+\code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}} from the canonical \code{rcicr} package
+(Dotsch, 2016; v1.0.1 on GitHub as of 2023). Canonical \code{rcicr} does
+not expose Brief-RC-specific CI or infoVal functions, so the Brief-RC
+path returns a \code{"skip"} result. A correct Brief-RC infoVal requires
+a reference distribution matched to each participant's trial count
+(not the pool size stored in the rdata), and implementing that
+correctly is deferred to the companion \code{rcicrely} package.
 
-\strong{Side effect.} rcicr caches a reference distribution inside the
-supplied \code{rdata} file on the first call. Subsequent calls reuse it
-and run much faster. Copy your \code{rdata} file beforehand if you want
-the original untouched.
+\strong{Side effect (2IFC).} \code{rcicr} caches a reference distribution inside
+the supplied \code{rdata} file on the first call. Subsequent calls reuse
+it. Copy your \code{rdata} beforehand if you want the original untouched.
 }
 \examples{
 \dontrun{
-# Requires rcicr and a 2IFC rdata file
 compute_infoval_summary(
   responses, method = "2ifc",
   rdata = "stimuli.RData",
@@ -79,4 +78,13 @@ compute_infoval_summary(
 )
 }
 
+}
+\references{
+Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch,
+R., & Aarts, H. (2019). Quantifying the informational value of
+classification images. \emph{Behavior Research Methods}, 51(5), 2059--2073.
+
+Dotsch, R. (2016). \emph{rcicr: Reverse-correlation image-classification
+toolbox} [R package].
+\url{https://github.com/rdotsch/rcicr}
 }

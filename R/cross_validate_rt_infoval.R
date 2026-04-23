@@ -56,6 +56,18 @@ cross_validate_rt_infoval <- function(responses,
   method <- match.arg(method)
   label  <- "RT vs infoVal"
 
+  if (method == "briefrc") {
+    return(rcdiag_result(
+      "skip", label,
+      c(
+        "RT x infoVal cross-validation is not supported for Brief-RC in",
+        "rcicrdiagnostics. It depends on compute_infoval_summary(), which",
+        "is not implemented for Brief-RC (see that function's help)."
+      ),
+      data = list(method = "briefrc")
+    ))
+  }
+
   if (!col_rt %in% names(responses)) {
     cli::cli_abort(c(
       "Column {.val {col_rt}} not found in {.arg responses}.",
@@ -105,11 +117,17 @@ cross_validate_rt_infoval <- function(responses,
       if (is.finite(r)) sprintf("%.3f", r) else "NA"
     ),
     sprintf(
-      "%d participants are both faster and more 'informative' than the group median.",
+      paste(
+        "%d participants are both faster and more 'informative'",
+        "than the group median."
+      ),
       n_fac
     ),
     if (isTRUE(r <= -0.30)) {
-      "A moderate negative correlation means fast responders score higher on infoVal, which is suspicious."
+      paste(
+        "A moderate negative correlation means fast responders score",
+        "higher on infoVal, which is suspicious."
+      )
     }
   )
 

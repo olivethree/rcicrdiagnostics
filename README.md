@@ -35,10 +35,15 @@ Or with `pak`:
 pak::pak("olivethree/rcicrdiagnostics")
 ```
 
-`rcicr` is a **Suggests** dependency and is only needed for 2IFC workflows. Brief-RC users do not need it. If you want it, install it from GitHub too:
+`rcicr` (Dotsch, 2016) is a **Suggests** dependency needed only for the 2IFC infoVal-based checks. Brief-RC users do not need it; the Brief-RC infoVal path is intentionally skipped in this package (a proper Brief-RC infoVal implementation is planned for the companion `rcicrely`). To install `rcicr`, follow Dotsch's own instructions:
 
 ```r
-remotes::install_github("rdotsch/rcicr")
+# Stable release (CRAN):
+install.packages("rcicr")
+
+# Or latest development version from GitHub:
+install.packages("devtools")
+devtools::install_github("rdotsch/rcicr")
 ```
 
 ## Quick start

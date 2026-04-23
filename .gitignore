@@ -8,3 +8,6 @@ CLAUDE.md
 /Meta/
 docs
 data-raw/generated/
+temp/
+CLAUDE_rcicrely.md
+/stimuli/
