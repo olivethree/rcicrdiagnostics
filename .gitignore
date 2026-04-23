@@ -1,13 +1,9 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
-CLAUDE.md
-.claude/
+# R package build outputs
 /doc/
 /Meta/
-docs
+docs/
+
+# data-raw generated artifacts (regenerated on demand by scripts)
 data-raw/generated/
-temp/
-CLAUDE_rcicrely.md
 /stimuli/
+.Rproj.user
