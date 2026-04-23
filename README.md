@@ -48,37 +48,54 @@ devtools::install_github("rdotsch/rcicr")
 
 ## Quick start
 
-### 2IFC
+The expected inputs are a **response CSV** (columns `participant_id`, `stimulus`, `response`, optionally `rt`; response coding `{-1, +1}`) plus one auxiliary file per pipeline: an rcicr stimulus `.RData` for 2IFC, or a space-delimited noise matrix for Brief-RC. See the [user's guide](https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.html) for full column specifications.
+
+### With your own data
 
 ```r
 library(rcicrdiagnostics)
 
-responses <- read.csv(system.file("extdata", "example_2ifc_responses.csv",
-                                  package = "rcicrdiagnostics"))
-rdata     <- system.file("extdata", "example_rcicr_stimuli.RData",
-                         package = "rcicrdiagnostics")
+# --- 2IFC ---
+responses <- read.csv("path/to/your/responses.csv")
+report    <- run_diagnostics(
+  responses,
+  method = "2ifc",
+  rdata  = "path/to/your/rcicr_stimuli.RData",
+  col_rt = "rt"   # omit if you do not have reaction times
+)
+print(report)
 
-report <- run_diagnostics(responses, method = "2ifc", rdata = rdata)
+# --- Brief-RC (12 or 20 alternatives; row format is the same) ---
+responses <- read.csv("path/to/your/responses.csv")
+report    <- run_diagnostics(
+  responses,
+  method       = "briefrc",
+  noise_matrix = "path/to/your/noise_matrix.txt",
+  col_rt       = "rt"
+)
 print(report)
 ```
 
-### Brief-RC
+### Try it on synthetic data (no real study needed)
+
+The package ships runnable example scripts under `inst/examples/` that generate a small synthetic dataset for each pipeline and demonstrate the diagnostic battery end-to-end. They use an AI-generated base face (from *thispersondoesnotexist.com*; no real person depicted).
 
 ```r
 library(rcicrdiagnostics)
 
-responses    <- read.csv(system.file("extdata", "example_briefrc_responses.csv",
-                                     package = "rcicrdiagnostics"))
-noise_matrix <- system.file("extdata", "example_noise_matrix_128.txt",
-                            package = "rcicrdiagnostics")
-base_image   <- system.file("extdata", "example_base_face_128.png",
-                            package = "rcicrdiagnostics")
+# Where to put the generated files (default is a tempdir folder).
+OUTPUT_DIR <- file.path(getwd(), "rcicrdiag-demo")
 
-report <- run_diagnostics(responses, method = "briefrc",
-                         noise_matrix = noise_matrix,
-                         base_image   = base_image)
-print(report)
+# Generate stimuli (~30–60 s) and bogus responses, then run diagnostics
+# on each pipeline:
+source(system.file("examples", "01_generate_stimuli.R",           package = "rcicrdiagnostics"))
+source(system.file("examples", "02a_bogus_responses_2ifc.R",      package = "rcicrdiagnostics"))
+source(system.file("examples", "02b_bogus_responses_briefrc12.R", package = "rcicrdiagnostics"))
+source(system.file("examples", "02c_bogus_responses_briefrc20.R", package = "rcicrdiagnostics"))
+source(system.file("examples", "03_run_diagnostics_demo.R",       package = "rcicrdiagnostics"))
 ```
+
+See [`inst/examples/README.md`](inst/examples/README.md) for what each script does, expected runtimes, and the participant "truth tables" that let you confirm the checks flagged the right participants.
 
 ## Tutorial
 
