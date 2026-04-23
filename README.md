@@ -1,12 +1,12 @@
 # rcicrdiagnostics
 
-Pre-flight data-quality diagnostics for reverse correlation experiments.
+A toolkit for data-quality diagnostics in reverse correlation experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
 
 > **Status:** in development. The API is not yet stable and the package is not on CRAN. Distribution is GitHub-only.
 
 ## What it does
 
-Reverse correlation pipelines fail silently. Miscoded responses, misaligned stimulus numbers, mismatched `.RData` parameter files, and malformed noise matrices all produce CIs and infoVal scores that look plausible but are wrong. `rcicrdiagnostics` is a systematic battery of checks to run *before* interpreting any CI or computing reliability.
+Reverse correlation pipelines fail silently. Miscoded responses, misaligned stimulus numbers, mismatched `.RData` parameter files, and malformed noise matrices all produce CIs and infoVal scores that look plausible but are wrong. `rcicrdiagnostics` provides a systematic battery of checks to run *before* interpreting any CI or computing reliability.
 
 It supports both pipelines through a single `method` argument:
 
@@ -102,22 +102,29 @@ are planned once the CI-generation–dependent checks land.
 
 ## Citation
 
+If you use `rcicrdiagnostics` in your research, please cite it as:
+
+> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse Correlation Experiments* (R package version 0.0.0.9000). <https://github.com/olivethree/rcicrdiagnostics>
+
+A BibTeX entry and up-to-date version string are available via:
+
 ```r
 citation("rcicrdiagnostics")
 ```
 
-If you use the Brief-RC pipeline, also cite:
+A Zenodo DOI will be added at first tagged release.
 
-> Schmitz, M., et al. (2024). *Brief reverse correlation.*
+Please also cite the methodological sources appropriate to your pipeline:
+
+- **2IFC**: Dotsch (2016), Brinkman et al. (2019) for infoVal
+- **Brief-RC**: Schmitz, Rougier, and Yzerbyt (2024)
+
+Full references are listed at the end of the [tutorial](https://olivethree.github.io/rcicrdiagnostics/articles/tutorial.html).
 
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE) (copyright notice) and [LICENSE.md](LICENSE.md) (full text).
 
-## Author
+## Credits
 
-Manuel Oliveira — <https://www.manueloliveira.nl>
-
-## Acknowledgements
-
-This package was co-developed with the assistance of [Claude](https://www.anthropic.com/claude) (Anthropic).
+Manuel Oliveira — <https://www.manueloliveira.nl>. Development was assisted by Claude (Anthropic); the author is responsible for all content and decisions.

@@ -1,11 +1,11 @@
 ---
-title: "rcicrdiagnostics: a tutorial"
+title: "rcicrdiagnostics: user's guide"
 output:
   rmarkdown::html_vignette:
     toc: true
     toc_depth: 3
 vignette: >
-  %\VignetteIndexEntry{rcicrdiagnostics: a tutorial}
+  %\VignetteIndexEntry{rcicrdiagnostics: user's guide}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -37,10 +37,10 @@ catch these problems and neither does the `rcicr` package, because the
 errors live in the *match* between your response data and the files that
 generated the stimuli.
 
-`rcicrdiagnostics` is a set of checks you run on your data **before**
-computing any CI or infoVal. If a check fails, fix the data; if it
-warns, investigate; if everything passes, you can compute CIs knowing
-the basic data mechanics are in order.
+`rcicrdiagnostics` is a toolkit of data-quality checks you run on your
+data **before** computing any CI or infoVal. If a check fails, fix the
+data; if it warns, investigate; if everything passes, you can compute
+CIs knowing the basic data mechanics are in order.
 
 The package supports two pipelines through a single `method` argument:
 
@@ -721,11 +721,154 @@ A practical workflow:
    **warn** — move on to `rcicr::generateCI2IFC()` (2IFC) or your
    Brief-RC CI code.
 
-## 9. References
+## 9. Choosing a CI scaling option
+
+One of the first decisions researchers face after diagnostics pass is
+what *scaling* to apply when generating CIs. The choice is often
+under-documented in published work and is a source of persistent
+confusion. This section explains what scaling is, what the five options
+in `rcicr` do, and which option is appropriate for which downstream
+analysis.
+
+### 9.1. What scaling is, and why it exists
+
+When `rcicr::batchGenerateCI2IFC()` (or `generateCI2IFC()`) computes a
+CI, the underlying math produces a two-dimensional pixel array whose
+values are typically centered near zero and span a small range — often
+between roughly $-0.01$ and $+0.01$, depending on signal strength and
+number of trials. These numbers are the real signal: they encode how
+much each pixel contributes to the participant's mental image.
+
+They cannot, however, be displayed as-is. Monitors render pixel
+intensities between 0 (black) and 1 (white); negative values have no
+display meaning, and the absolute values would be too small to see.
+
+*Scaling* solves this display problem by transforming the CI into a
+range suitable for rendering. Every CI that `rcicr` returns therefore
+contains two parallel fields:
+
+- **`ci$ci`** — the *raw* CI, exactly as produced by the weighted sum
+  of noise patterns. This is your data.
+- **`ci$scaled`** — the *rescaled* CI, produced by applying one of the
+  transformations below. This is what gets saved as a PNG or combined
+  with the base image for display.
+
+The raw field is **unchanged** regardless of which scaling option you
+pass to the CI-generating function. Only the scaled field changes. This
+distinction matters for every numerical analysis you perform on a CI.
+
+### 9.2. The five scaling options in `rcicr`
+
+| Option | What it does | When to consider |
+|---|---|---|
+| `none` | Leaves the CI unchanged in the `$scaled` field. | Numerical inspection; any computation you want in raw CI units. |
+| `constant` | $(CI + c) / (2c)$ with $c$ fixed (default $c = 0.1$). The same $c$ gives identical mapping across CIs. | Visual comparability across CIs when you want to preserve relative intensity and have within-study control over the display scale. |
+| `independent` | Same formula, but $c = \max|CI|$ computed separately for each CI. Each CI is stretched to $[0, 1]$ using its own range. | Maximum visual contrast for a single CI viewed alone. *Not* for comparisons across CIs. |
+| `matched` | Linearly remaps the CI to match the base image's pixel range. | Overlaying the CI on the base image for visual presentation; rating-task stimuli that should blend with the base face. |
+| `autoscale` | Batch-level variant of `independent`: computes one shared constant from the widest-range CI across all CIs produced in the same call. | Sets of CIs that will be viewed side by side — for example, group-level CIs per condition. |
+
+The defaults differ by function: `batchGenerateCI2IFC()` uses
+`"autoscale"` by default; `generateCI2IFC()` uses `"independent"`. That
+asymmetry means two pipelines that both rely on "`rcicr` defaults" can
+produce visually different images from the same underlying raw CIs.
+
+### 9.3. Which scaling for which analysis
+
+The short version: **numerical analyses operate on `ci$ci`;
+visualization choices operate on `ci$scaled`**. The `scaling` argument
+affects only the second.
+
+The table below expands this into typical use cases.
+
+| Your goal | Correct choice | Reasoning |
+|---|---|---|
+| **Computing infoVal** | Any scaling | `rcicr::computeInfoVal2IFC()` operates on `ci$ci` internally. The `scaling` argument has no effect on the returned *z*-score. |
+| **Pixel-wise correlations between CIs** (similarity) | Use `ci$ci` | Pearson correlation is preserved only under *uniform* linear rescalings. `independent` and `matched` apply CI-specific rescalings, which distort correlations. |
+| **Euclidean distance between CIs** (e.g., the objective discriminability ratio in Brinkman et al., 2019) | Use `ci$ci` | Same reasoning — CI-dependent rescalings change distances non-uniformly. |
+| **Producing CIs for a trait-ratings task** | `autoscale` (group of CIs viewed together) or `constant` with fixed $c$ (across-study consistency) | Raters should perceive genuine signal differences across CIs. `independent` defeats this because every CI is stretched to the same display range; a weak-signal CI looks as intense as a strong-signal CI. |
+| **Saving PNG figures for a paper** | `matched` for base-image overlays; `autoscale` for grids of CIs | Pick one and document it. Using different options across figures in the same paper makes them visually incomparable even when the underlying data are the same. |
+| **Pixel / cluster statistical tests** (Chauvin et al., 2005) | `rcicr::plotZmap()` (handles the raw CI internally) | Do not hand-construct a *z*-map from `ci$scaled`. |
+| **Reporting CI magnitude or effect size** | `ci$ci` | Scaled CIs have arbitrary units determined by the option chosen. |
+
+### 9.4. Common pitfalls
+
+- **Correlating scaled CIs.** Calling `cor()` on two
+  `independent`-scaled CIs correlates images that have been stretched
+  to the same $[0, 1]$ range by *different* constants. The result is
+  no longer a clean pixel-wise agreement. Compute correlations on the
+  raw CI.
+
+- **Using `independent` for rating-task stimuli.** A participant who
+  responded weakly produces a low-signal CI. Under `independent`, that
+  CI is stretched to the same display range as a strong-signal CI.
+  Raters perceive both as equally intense, and rating-based analyses
+  systematically underestimate signal differences across participants.
+
+- **Mixing scaling options across studies.** Two papers that both
+  claim to use "`rcicr` defaults" are not necessarily comparable:
+  `batchGenerateCI2IFC()` defaults to `autoscale`,
+  `generateCI2IFC()` defaults to `independent`. Always document the
+  scaling option used in your methods section.
+
+- **Believing that scaling affects infoVal.** It does not.
+  `computeInfoVal2IFC()` always reads the raw CI. If two analyses give
+  different infoVal values, the cause is elsewhere — in the response
+  data, in the reference-distribution cache, or in the trial count —
+  not in scaling. See Section 6.9 for the details.
+
+- **Applying `norm()` or `sqrt(sum(x^2))` to `ci$scaled`.** When
+  reimplementing any CI-based statistic by hand, operate on `ci$ci`.
+  The scaled field is for rendering, not for computation.
+
+### 9.5. Recommended defaults
+
+When in doubt:
+
+- **Figures in a paper**: `autoscale` for grids of CIs; `matched` for
+  base-image overlays. Document the choice in methods.
+- **Rating-task stimuli**: `autoscale` within a single batch;
+  otherwise `constant` with a fixed `c` documented in methods.
+- **Any numerical analysis** (infoVal, correlations, distances,
+  effect sizes, pixel tests): compute from `ci$ci`, regardless of the
+  scaling argument passed.
+
+A concrete workflow for a typical 2IFC study:
+
+```{r scaling-workflow, eval = FALSE}
+# 1. Generate CIs with autoscale for a visually-comparable set of
+#    images (useful for rating-task stimuli or figure panels).
+cis <- rcicr::batchGenerateCI2IFC(
+  data        = responses,
+  by          = "participant_id",
+  stimuli     = "stimulus",
+  responses   = "response",
+  baseimage   = "base",
+  rdata       = "stimuli.RData",
+  save_as_png = TRUE,
+  scaling     = "autoscale"
+)
+
+# 2. Compute infoVal per participant -- operates on ci$ci internally.
+iv <- sapply(cis, function(ci) {
+  rcicr::computeInfoVal2IFC(ci, rdata = "stimuli.RData")
+})
+
+# 3. Pixel-wise similarity between two CIs -- compute on the raw CI.
+r <- cor(c(cis[[1]]$ci), c(cis[[2]]$ci))
+```
+
+The PNGs produced in step 1 are visually comparable because
+`autoscale` applies one shared constant across the batch. The
+statistical results in steps 2 and 3 are computed on the raw CI and
+are therefore independent of the scaling argument.
+
+## 10. References
 
 Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch, R., & Aarts, H. (2019). Quantifying the informational value of classification images. *Behavior Research Methods*, *51*(5), 2059–2073. https://doi.org/10.3758/s13428-019-01232-2
 
 Brinkman, L., Todorov, A., & Dotsch, R. (2017). Visualising mental representations: A primer on noise-based reverse correlation in social psychology. *European Review of Social Psychology*, *28*(1), 333–361. https://doi.org/10.1080/10463283.2017.1381469
+
+Chauvin, A., Worsley, K. J., Schyns, P. G., Arguin, M., & Gosselin, F. (2005). Accurate statistical tests for smooth classification images. *Journal of Vision*, *5*(9), 659–667. https://doi.org/10.1167/5.9.1
 
 Dotsch, R. (2016). *rcicr: Reverse-correlation image-classification toolbox* [R package]. https://github.com/rdotsch/rcicr
 
@@ -733,7 +876,15 @@ Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit: Estimatin
 
 Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief reverse correlation: An improved tool to assess visual representations. *European Journal of Social Psychology*. Advance online publication. https://doi.org/10.1002/ejsp.3100
 
-## 10. Authorship
+## 11. Citation and credits
 
-Developed by M. Oliveira with Claude (Anthropic) assistance.
-M. Oliveira is responsible for the content.
+If you use `rcicrdiagnostics` in your research, please cite it as:
+
+> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse Correlation Experiments* (R package version 0.0.0.9000). <https://github.com/olivethree/rcicrdiagnostics>
+
+A BibTeX entry and up-to-date version are available from R via
+`citation("rcicrdiagnostics")`. A Zenodo DOI will be added at first
+tagged release.
+
+Author: Manuel Oliveira. Development was assisted by Claude (Anthropic);
+the author is responsible for all content.
