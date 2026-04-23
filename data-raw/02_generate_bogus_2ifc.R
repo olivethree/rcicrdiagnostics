@@ -1,6 +1,6 @@
 # Generate bogus 2IFC response data for exercising the diagnostic checks.
 #
-# Design (matches CLAUDE.md spec)
+# Design
 #   30 participants across three trial-count conditions (10 each): 300 / 500 / 1000
 #   Stimulus pool: 300 (matches 01_generate_noise.R)
 #   Response coding: {-1, 1}

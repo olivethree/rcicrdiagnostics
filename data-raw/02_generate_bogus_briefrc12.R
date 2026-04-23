@@ -17,7 +17,7 @@
 #     stimulus : pool id of the underlying noise pattern of the chosen face
 #     response : +1 if the oriented version was chosen, -1 if the inverted
 #
-# Design (matches CLAUDE.md spec)
+# Design
 #   30 participants across three trial-count conditions (10 each):
 #     300 / 500 / 1000 trials per participant
 #   Noise-pattern pool size: 300 (matches 01_generate_noise.R)
