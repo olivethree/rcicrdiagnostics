@@ -107,7 +107,7 @@ Confirm it loaded:
 ``` r
 library(rcicrdiagnostics)
 packageVersion("rcicrdiagnostics")
-#> [1] '0.0.0.9000'
+#> [1] '0.1.0'
 ```
 
 ## 3. What data the package expects
