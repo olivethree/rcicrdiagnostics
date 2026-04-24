@@ -123,7 +123,7 @@ are planned once the CI-generation–dependent checks land.
 
 If you use `rcicrdiagnostics` in your research, please cite it as:
 
-> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse Correlation Experiments* (Version 0.1.0) [R package]. Zenodo. <https://doi.org/10.5281/zenodo.19734757>
+> Oliveira, M. (2026). *rcicrdiagnostics: Data quality diagnostics for reverse correlation experiments in social psychology using the rcicr package* (Version 0.1.0) [R package]. Zenodo. <https://doi.org/10.5281/zenodo.19734757>
 
 The concept DOI above always resolves to the latest version. For citations to a specific release, use the version-specific DOI available on the [Zenodo record page](https://doi.org/10.5281/zenodo.19734757). A BibTeX entry and the installed version are available via:
 
