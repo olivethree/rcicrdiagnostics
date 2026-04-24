@@ -45,7 +45,7 @@ CIs knowing the basic data mechanics are in order.
 The package supports two pipelines through a single `method` argument:
 
 - **`"2ifc"`** — the standard two-image forced-choice pipeline, as
-  implemented by the [`rcicr`][rcicr] package (Dotsch, 2016). On each
+  implemented by the [`rcicr`][rcicr] package (Dotsch, 2016, 2023). On each
   trial the participant picks one of two noisy faces.
 - **`"briefrc"`** — the Brief Reverse Correlation pipeline
   (Schmitz et al., 2024). On each trial the participant picks one noisy
@@ -77,7 +77,7 @@ R 4.1 or newer.
 ### Optional packages (needed only for the 2IFC infoVal-based checks)
 
 Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal) delegate
-the 2IFC path to the canonical `rcicr` package (Dotsch, 2016).
+the 2IFC path to the canonical `rcicr` package (Dotsch, 2016, 2023).
 **They return a `"skip"` result for Brief-RC** — see Section 6.9 for why.
 If you want the 2IFC infoVal checks, install `rcicr`. From Dotsch's own
 install instructions:
@@ -870,7 +870,9 @@ Brinkman, L., Todorov, A., & Dotsch, R. (2017). Visualising mental representatio
 
 Chauvin, A., Worsley, K. J., Schyns, P. G., Arguin, M., & Gosselin, F. (2005). Accurate statistical tests for smooth classification images. *Journal of Vision*, *5*(9), 659–667. https://doi.org/10.1167/5.9.1
 
-Dotsch, R. (2016). *rcicr: Reverse-correlation image-classification toolbox* [R package]. https://github.com/rdotsch/rcicr
+Dotsch, R. (2016). *rcicr: Reverse-correlation image-classification toolbox* [R package, development versions]. https://github.com/rdotsch/rcicr
+
+Dotsch, R. (2023). *rcicr: Reverse correlation image classification toolbox* (Version 1.0.1) [R package]. https://github.com/rdotsch/rcicr
 
 Mangini, M. C., & Biederman, I. (2004). Making the ineffable explicit: Estimating the information employed for face classifications. *Cognitive Science*, *28*(2), 209–226. https://doi.org/10.1016/j.cogsci.2003.11.004
 
