@@ -17,3 +17,5 @@
 ^doc$
 ^Meta$
 ^LICENSE\.md$
+^\.zenodo\.json$
+^release-notes-v.*\.md$
