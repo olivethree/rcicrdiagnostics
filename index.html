@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Data Quality Diagnostics for Reverse Correlation Experiments in Social Psychology Using the Rcicr Package">
-<meta name="description" content="A systematic battery of data-quality checks for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the rcicr package and the Brief-RC pipeline (Schmitz et al., 2024) that uses direct noise matrix multiplication. Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.">
-<meta property="og:description" content="A systematic battery of data-quality checks for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the rcicr package and the Brief-RC pipeline (Schmitz et al., 2024) that uses direct noise matrix multiplication. Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.">
+<meta name="description" content="A toolkit that runs data-quality diagnostics for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the rcicr package (Dotsch, 2016, 2023) and the Brief-RC pipeline (Schmitz, Rougier, &amp; Yzerbyt, 2024). Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.">
+<meta property="og:description" content="A toolkit that runs data-quality diagnostics for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the rcicr package (Dotsch, 2016, 2023) and the Brief-RC pipeline (Schmitz, Rougier, &amp; Yzerbyt, 2024). Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -62,14 +62,8 @@
 <div class="section level2">
 <h2 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
 </h2>
-<p>Reverse correlation pipelines fail silently. Miscoded responses, misaligned stimulus numbers, mismatched <code>.RData</code> parameter files, and malformed noise matrices all produce CIs and infoVal scores that look plausible but are wrong. <code>rcicrdiagnostics</code> provides a systematic battery of checks to run <em>before</em> interpreting any CI or computing reliability.</p>
-<p>It supports both pipelines through a single <code>method</code> argument:</p>
-<ul>
-<li>
-<strong>2IFC</strong> — the standard two-image forced-choice pipeline, using the <a href="https://github.com/rdotsch/rcicr" class="external-link"><code>rcicr</code></a> package for CI and infoVal.</li>
-<li>
-<strong>Brief-RC</strong> — the Schmitz et al. (2024) multi-alternative variant, which uses direct noise-matrix multiplication and ships no <code>.RData</code> file.</li>
-</ul>
+<p>A toolkit that runs data-quality diagnostics for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the <a href="https://github.com/rdotsch/rcicr" class="external-link"><code>rcicr</code></a> package (Dotsch, 2016, 2023) and the Brief-RC pipeline (Schmitz, Rougier, &amp; Yzerbyt, 2024). Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.</p>
+<p>The diagnostics catch failures that neither base R nor <code>rcicr</code> catches because they live in the <em>match</em> between your response data and the files that generated the stimuli — miscoded responses, misaligned stimulus numbers, mismatched <code>.RData</code> parameter files, malformed noise matrices.</p>
 <p>Exported functions fall into three families:</p>
 <ul>
 <li>
@@ -182,7 +176,7 @@
 <p>Please also cite the methodological sources appropriate to your pipeline:</p>
 <ul>
 <li>
-<strong>2IFC</strong>: Dotsch (2016), Brinkman et al. (2019) for infoVal</li>
+<strong>2IFC</strong>: Dotsch (2016, 2023) for the <code>rcicr</code> package; Brinkman et al. (2019) for infoVal</li>
 <li>
 <strong>Brief-RC</strong>: Schmitz, Rougier, and Yzerbyt (2024)</li>
 </ul>

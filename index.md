@@ -10,21 +10,19 @@ experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
 
 ## What it does
 
-Reverse correlation pipelines fail silently. Miscoded responses,
-misaligned stimulus numbers, mismatched `.RData` parameter files, and
-malformed noise matrices all produce CIs and infoVal scores that look
-plausible but are wrong. `rcicrdiagnostics` provides a systematic
-battery of checks to run *before* interpreting any CI or computing
-reliability.
+A toolkit that runs data-quality diagnostics for reverse correlation
+experiments. Supports both the standard two-image forced-choice (2IFC)
+pipeline via the [`rcicr`](https://github.com/rdotsch/rcicr) package
+(Dotsch, 2016, 2023) and the Brief-RC pipeline (Schmitz, Rougier, &
+Yzerbyt, 2024). Designed to be run before computing classification
+images or information values so that silent data-processing errors are
+caught early.
 
-It supports both pipelines through a single `method` argument:
-
-- **2IFC** — the standard two-image forced-choice pipeline, using the
-  [`rcicr`](https://github.com/rdotsch/rcicr) package for CI and
-  infoVal.
-- **Brief-RC** — the Schmitz et al. (2024) multi-alternative variant,
-  which uses direct noise-matrix multiplication and ships no `.RData`
-  file.
+The diagnostics catch failures that neither base R nor `rcicr` catches
+because they live in the *match* between your response data and the
+files that generated the stimuli — miscoded responses, misaligned
+stimulus numbers, mismatched `.RData` parameter files, malformed noise
+matrices.
 
 Exported functions fall into three families:
 
@@ -174,7 +172,8 @@ citation("rcicrdiagnostics")
 Please also cite the methodological sources appropriate to your
 pipeline:
 
-- **2IFC**: Dotsch (2016), Brinkman et al. (2019) for infoVal
+- **2IFC**: Dotsch (2016, 2023) for the `rcicr` package; Brinkman et
+  al. (2019) for infoVal
 - **Brief-RC**: Schmitz, Rougier, and Yzerbyt (2024)
 
 Full references are listed at the end of the
