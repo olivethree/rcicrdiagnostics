@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/olivethree/rcicrdiagnostics/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/olivethree/rcicrdiagnostics/blob/v0.1.0/inst/CITATION)
 
 Oliveira M (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse
 Correlation Experiments*. R package version 0.1.0,
