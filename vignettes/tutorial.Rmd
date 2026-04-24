@@ -880,11 +880,13 @@ Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the brief reverse co
 
 If you use `rcicrdiagnostics` in your research, please cite it as:
 
-> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse Correlation Experiments* (R package version 0.0.0.9000). <https://github.com/olivethree/rcicrdiagnostics>
+> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for Reverse Correlation Experiments* (Version 0.1.0) [R package]. Zenodo. <https://doi.org/10.5281/zenodo.19734757>
 
-A BibTeX entry and up-to-date version are available from R via
-`citation("rcicrdiagnostics")`. A Zenodo DOI will be added at first
-tagged release.
+The DOI above is the concept DOI, which always resolves to the latest
+version. For citations to a specific release, see the version-specific
+DOI on the [Zenodo record page](https://doi.org/10.5281/zenodo.19734757).
+A BibTeX entry and the installed version are available from R via
+`citation("rcicrdiagnostics")`.
 
 Author: Manuel Oliveira. Development was assisted by Claude (Anthropic);
 the author is responsible for all content.

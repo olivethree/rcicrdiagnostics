@@ -4,9 +4,8 @@ bibentry(
   bibtype = "Manual",
   title   = "{rcicrdiagnostics}: Diagnostics Toolkit for Reverse Correlation Experiments",
   author  = person("Manuel", "Oliveira"),
-  year    = format(Sys.Date(), "%Y"),
+  year    = "2026",
   note    = sprintf("R package version %s", meta$Version),
-  url     = "https://github.com/olivethree/rcicrdiagnostics"
-  # Add DOI here once a Zenodo release is minted, e.g.:
-  # doi   = "10.5281/zenodo.XXXXXXX"
+  url     = "https://github.com/olivethree/rcicrdiagnostics",
+  doi     = "10.5281/zenodo.19734757"
 )
