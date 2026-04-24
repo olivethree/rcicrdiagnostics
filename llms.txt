@@ -3,6 +3,8 @@
 A toolkit for data-quality diagnostics in reverse correlation
 experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
 
+[![DOI](https://zenodo.org/badge/1219369681.svg)](https://doi.org/10.5281/zenodo.19734757)
+
 > **Status:** in development. The API is not yet stable and the package
 > is not on CRAN. Distribution is GitHub-only.
 
@@ -155,17 +157,19 @@ are planned once the CI-generation–dependent checks land.
 
 If you use `rcicrdiagnostics` in your research, please cite it as:
 
-> Oliveira, M. (2026). *rcicrdiagnostics: Diagnostics Toolkit for
-> Reverse Correlation Experiments* (R package version 0.0.0.9000).
-> <https://github.com/olivethree/rcicrdiagnostics>
+> Oliveira, M. (2026). *rcicrdiagnostics: Data quality diagnostics for
+> reverse correlation experiments in social psychology using the rcicr
+> package* (Version 0.1.0) \[R package\]. Zenodo.
+> <https://doi.org/10.5281/zenodo.19734757>
 
-A BibTeX entry and up-to-date version string are available via:
+The concept DOI above always resolves to the latest version. For
+citations to a specific release, use the version-specific DOI available
+on the [Zenodo record page](https://doi.org/10.5281/zenodo.19734757). A
+BibTeX entry and the installed version are available via:
 
 ``` r
 citation("rcicrdiagnostics")
 ```
-
-A Zenodo DOI will be added at first tagged release.
 
 Please also cite the methodological sources appropriate to your
 pipeline:
