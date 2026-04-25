@@ -1,8 +1,13 @@
 # Per-participant information-value (infoVal) summary
 
-Computes the information value (infoVal; Brinkman et al., 2019) for
-every participant and returns a pass / warn / fail summary plus a
-per-participant table flagging those below the `threshold`.
+Computes per-participant information value (infoVal; Brinkman et al.,
+2019) via the canonical `rcicr` 2IFC pipeline and returns a tidy
+per-participant table. This is the thin compatibility wrapper around
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html).
+For a richer, paradigm-agnostic diagnostic (group-mean z,
+random-responder calibration check, face-mask z-lift, interpretation
+bullets), see
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md).
 
 ## Usage
 
@@ -64,28 +69,35 @@ compute_infoval_summary(
 An
 [`rcdiag_result()`](https://olivethree.github.io/rcicrdiagnostics/reference/rcdiag_result.md)
 object. For 2IFC, `data$per_participant` has one row per participant
-with `participant_id`, `infoval`, and `meaningful` (logical:
-`infoval >= threshold`). For Brief-RC, a `"skip"` result with an
-explanatory message.
+with `participant_id`, `infoval`, and `above_threshold` (logical:
+`infoval >= threshold`). For Brief-RC, a `"skip"` result pointing the
+user at
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md).
 
 ## Details
 
-infoVal is a z-like score describing how far a participant's
-classification image (CI) is from a null-response reference
-distribution. Values at or below `1.96` are effectively
-indistinguishable from noise; higher values indicate meaningful signal.
+Reported per-producer infoVal is paradigm- and target-dependent.
+Brinkman et al. (2019, p. 12) report 54-68% of 2IFC gender participants
+clearing z = 1.96 (median 3-4). Schmitz et al. (2024) report Brief-RC
+infoVals below 1.96 across all conditions in both of their experiments.
+The status returned here therefore does not `"fail"` on a
+per-participant headcount alone: it returns `"pass"` when the median
+per-participant z is positive and `"warn"` otherwise. Use
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+when you need a proper verdict (random-responder calibration +
+group-mean z + masking).
 
 The 2IFC path delegates to
 [`rcicr::batchGenerateCI2IFC()`](https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html)
 and
 [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
-from the canonical `rcicr` package (Dotsch, 2016; v1.0.1 on GitHub as of
-2023). Canonical `rcicr` does not expose Brief-RC-specific CI or infoVal
-functions, so the Brief-RC path returns a `"skip"` result. A correct
-Brief-RC infoVal requires a reference distribution matched to each
-participant's trial count (not the pool size stored in the rdata), and
-implementing that correctly is deferred to the companion `rcicrely`
-package.
+from the canonical `rcicr` package (Dotsch, 2016; v1.0.1). Canonical
+`rcicr` uses a pool-size reference distribution and does not expose a
+Brief-RC path. The Brief-RC route here returns a `"skip"` result and
+points users at
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md),
+which uses an in-package native Brief-RC implementation with a
+per-trial-count reference distribution.
 
 **Side effect (2IFC).** `rcicr` caches a reference distribution inside
 the supplied `rdata` file on the first call. Subsequent calls reuse it.

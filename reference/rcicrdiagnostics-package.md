@@ -1,11 +1,11 @@
-# rcicrdiagnostics: Data-Quality Diagnostics for Reverse Correlation Experiments
+# rcicrdiagnostics: Data Quality Diagnostics for Reverse Correlation Experiments in Social Psychology Using the Rcicr Package
 
-A systematic battery of data-quality checks for reverse correlation
+A toolkit that runs data-quality diagnostics for reverse correlation
 experiments. Supports both the standard two-image forced-choice (2IFC)
-pipeline via the 'rcicr' package and the Brief-RC pipeline (Schmitz et
-al., 2024) that uses direct noise matrix multiplication. Designed to be
-run before computing classification images or information values so that
-silent data-processing errors are caught early.
+pipeline via the 'rcicr' package (Dotsch, 2016, 2023) and the Brief-RC
+pipeline (Schmitz, Rougier, & Yzerbyt, 2024). Designed to be run before
+computing classification images or information values so that silent
+data-processing errors are caught early.
 
 ## See also
 

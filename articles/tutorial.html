@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">rcicrdiagnostics</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,7 +180,7 @@ CRAN):</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/olivethree/rcicrdiagnostics" class="external-link">rcicrdiagnostics</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion</a></span><span class="op">(</span><span class="st">"rcicrdiagnostics"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] '0.1.0'</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] '0.2.0'</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -312,6 +312,7 @@ hundred trials each, responses drawn uniformly from
 <span><span class="co">#&gt;   - check_rt (no col_rt)</span></span>
 <span><span class="co">#&gt;   - check_stimulus_alignment (no rdata / noise_matrix)</span></span>
 <span><span class="co">#&gt;   - check_version_compat (no rdata)</span></span>
+<span><span class="co">#&gt;   - diagnose_infoval (need infoval_iter)</span></span>
 <span><span class="co">#&gt;   - compute_infoval_summary (need rdata + infoval_iter)</span></span>
 <span><span class="co">#&gt;   - check_response_inversion (needs infoval)</span></span>
 <span><span class="co">#&gt;   - cross_validate_rt_infoval (needs infoval)</span></span></code></pre></div>
@@ -816,6 +817,7 @@ hand — for example, to sanity-check the response CSV by itself:</p>
 <span><span class="co">#&gt;   - check_rt (no col_rt)</span></span>
 <span><span class="co">#&gt;   - check_stimulus_alignment (no rdata / noise_matrix)</span></span>
 <span><span class="co">#&gt;   - check_version_compat (no rdata)</span></span>
+<span><span class="co">#&gt;   - diagnose_infoval (need infoval_iter)</span></span>
 <span><span class="co">#&gt;   - compute_infoval_summary (need rdata + infoval_iter)</span></span>
 <span><span class="co">#&gt;   - check_response_inversion (needs infoval)</span></span>
 <span><span class="co">#&gt;   - cross_validate_rt_infoval (needs infoval)</span></span></code></pre></div>
@@ -862,6 +864,7 @@ first call to take a few minutes.</li>
 <span><span class="co">#&gt;   - check_rt (no col_rt)</span></span>
 <span><span class="co">#&gt;   - check_stimulus_alignment (no rdata / noise_matrix)</span></span>
 <span><span class="co">#&gt;   - check_version_compat (no rdata)</span></span>
+<span><span class="co">#&gt;   - diagnose_infoval (need infoval_iter)</span></span>
 <span><span class="co">#&gt;   - compute_infoval_summary (need rdata + infoval_iter)</span></span>
 <span><span class="co">#&gt;   - check_response_inversion (needs infoval)</span></span>
 <span><span class="co">#&gt;   - cross_validate_rt_infoval (needs infoval)</span></span></code></pre></div>

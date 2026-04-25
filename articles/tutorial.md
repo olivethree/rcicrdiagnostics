@@ -107,7 +107,7 @@ Confirm it loaded:
 ``` r
 library(rcicrdiagnostics)
 packageVersion("rcicrdiagnostics")
-#> [1] '0.1.0'
+#> [1] '0.2.0'
 ```
 
 ## 3. What data the package expects
@@ -200,6 +200,7 @@ report
 #>   - check_rt (no col_rt)
 #>   - check_stimulus_alignment (no rdata / noise_matrix)
 #>   - check_version_compat (no rdata)
+#>   - diagnose_infoval (need infoval_iter)
 #>   - compute_infoval_summary (need rdata + infoval_iter)
 #>   - check_response_inversion (needs infoval)
 #>   - cross_validate_rt_infoval (needs infoval)
@@ -704,6 +705,7 @@ run_diagnostics(responses, method = "2ifc")
 #>   - check_rt (no col_rt)
 #>   - check_stimulus_alignment (no rdata / noise_matrix)
 #>   - check_version_compat (no rdata)
+#>   - diagnose_infoval (need infoval_iter)
 #>   - compute_infoval_summary (need rdata + infoval_iter)
 #>   - check_response_inversion (needs infoval)
 #>   - cross_validate_rt_infoval (needs infoval)
@@ -748,6 +750,7 @@ run_diagnostics(
 #>   - check_rt (no col_rt)
 #>   - check_stimulus_alignment (no rdata / noise_matrix)
 #>   - check_version_compat (no rdata)
+#>   - diagnose_infoval (need infoval_iter)
 #>   - compute_infoval_summary (need rdata + infoval_iter)
 #>   - check_response_inversion (needs infoval)
 #>   - cross_validate_rt_infoval (needs infoval)

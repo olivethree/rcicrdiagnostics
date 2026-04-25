@@ -20,6 +20,8 @@ run_diagnostics(
   col_response = "response",
   col_rt = NULL,
   infoval_iter = NULL,
+  face_mask = "auto",
+  with_replacement = "auto",
   ...
 )
 ```
@@ -76,6 +78,24 @@ run_diagnostics(
   because the reference simulation is slow and unwanted by default; set
   e.g. `10000` to enable.
 
+- face_mask:
+
+  Mask spec passed to
+  [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md).
+  Default `"auto"` (Schmitz 2024 oval). Pass `NULL` to skip the
+  masked-vs- unmasked comparison, or any value
+  [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+  accepts.
+
+- with_replacement:
+
+  Sampling regime forwarded to
+  [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+  /
+  [`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+  for the across-trials reference distribution. Default `"auto"` matches
+  the standard Brief-RC convention.
+
 - ...:
 
   Unused.
@@ -124,6 +144,7 @@ print(report)
 #> Skipped checks:
 #>   - check_stimulus_alignment (no rdata / noise_matrix)
 #>   - check_version_compat (no rdata)
+#>   - diagnose_infoval (need infoval_iter)
 #>   - compute_infoval_summary (need rdata + infoval_iter)
 #>   - check_response_inversion (needs infoval)
 #>   - cross_validate_rt_infoval (needs infoval)

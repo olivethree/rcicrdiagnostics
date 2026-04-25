@@ -32,10 +32,22 @@
 - [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md)
   : Cross-validate infoVal against RT quality
 
+- [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+  : Guided diagnostic for low or negative infoVal
+
+- [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md)
+  : Oval face-region mask for a square image
+
+- [`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+  : Per-producer informational value with trial-count-matched reference
+
 - [`is_rcdiag_result()`](https://olivethree.github.io/rcicrdiagnostics/reference/is_rcdiag_result.md)
   :
 
   Test whether an object is an `rcdiag_result`
+
+- [`load_face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/load_face_mask.md)
+  : Load a face mask from a PNG or JPEG image
 
 - [`load_responses()`](https://olivethree.github.io/rcicrdiagnostics/reference/load_responses.md)
   : Load reverse correlation response data from a CSV file
