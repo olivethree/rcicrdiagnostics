@@ -137,7 +137,7 @@ format console messages with colour.</li>
 checks)<a class="anchor" aria-label="anchor" href="#optional-packages-needed-only-for-the-2ifc-infoval-based-checks"></a>
 </h3>
 <p>Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal)
-delegate the 2IFC path to the canonical <code>rcicr</code> package
+delegate the 2IFC path to the original <code>rcicr</code> package
 (Dotsch, 2016, 2023). <strong>They return a <code>"skip"</code> result
 for Brief-RC</strong> — see Section 6.9 for why. If you want the 2IFC
 infoVal checks, install <code>rcicr</code>. From Dotsch’s own install
@@ -149,7 +149,7 @@ instructions:</p>
 <span><span class="co"># Latest dev version from GitHub:</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"devtools"</span><span class="op">)</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"rdotsch/rcicr"</span><span class="op">)</span></span></code></pre></div>
-<p>At the time of writing, the canonical <code>rcicr</code> is version
+<p>At the time of writing, the original <code>rcicr</code> is version
 1.0.1 (2023), maintained by Ron Dotsch on <a href="https://github.com/rdotsch/rcicr" class="external-link">github.com/rdotsch/rcicr</a>.</p>
 <ul>
 <li>
@@ -1122,7 +1122,7 @@ how far a participant’s CI is from a null-response reference
 distribution. Values around or below <code>1.96</code> are effectively
 indistinguishable from noise; higher values indicate meaningful
 signal.</p>
-<p>The 2IFC path delegates the heavy lifting to the canonical
+<p>The 2IFC path delegates the heavy lifting to the original
 <code>rcicr</code> package (Dotsch, v1.0.1 at the time of writing):
 <code>batchGenerateCI2IFC()</code> to build per-participant CIs and
 <code>computeInfoVal2IFC()</code> to score each against a simulated
@@ -1192,7 +1192,7 @@ increasing the number of trials may be beneficial to improve both
 metrics.”</em> So “low individual infoVal” is the normal empirical
 finding for Brief-RC in the only published methodological evaluation of
 it.</p>
-<p><strong>There is a known calibration bug for Brief-RC in canonical
+<p><strong>There is a known calibration bug for Brief-RC in the original
 rcicr.</strong> <code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> builds its
 random-responder reference distribution at the pool size (number of
 columns in the noise matrix it reconstructs internally), regardless of
@@ -1205,6 +1205,22 @@ downward. This package ships an in-package <code><a href="../reference/infoval.h
 reference is keyed on each producer’s actual trial count, closing the
 gap. How much that lifts any given dataset’s z is empirical and depends
 on the <code>n_trials / pool_size</code> ratio.</p>
+<p><strong>Why the simulator’s 50/50 ±1 sampling is correct under
+standard Brief-RC.</strong> A natural first worry on reading the
+simulator is that <code><a href="../reference/infoval.html">infoval()</a></code> draws random responses with
+<code>sample(c(-1, 1), n_trials, replace = TRUE)</code> — a uniform
+50/50 ±1 — when each Brief-RC trial actually involves picking 1 of 12
+alternatives. The 50/50 is exact under the standard Brief-RC trial
+structure (Schmitz et al., 2024, p. 6): each trial shows 6 oriented and
+6 inverted faces, so a random producer picks one of 12 with
+<code>P(response = +1) = 6/12 = 0.5</code>, and the chosen-stimulus-id
+sequence is uniform over the pool. The simulator’s marginal joint
+distribution of <code>(chosen_stim, response)</code> therefore matches a
+random Brief-RC responder. Designs that depart from a balanced
+oriented/inverted split per trial, or that have trials overlapping on
+the pool in non-standard ways, will see a small calibration drift; for
+the standard 6/6 design — and correspondingly for any other balanced
+split such as 10/10 in Brief-RC 20 — the calibration is exact.</p>
 <p><strong>Group-mean vs. individual z.</strong> The group-mean CI is
 built from N × T decisions across N producers, so its Frobenius norm is
 compared against a correspondingly tighter reference distribution;
@@ -1564,9 +1580,9 @@ at the <code>check_stimulus_alignment</code> step.
 <code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code>,
 <code><a href="../reference/check_response_inversion.html">check_response_inversion()</a></code>, and
 <code><a href="../reference/cross_validate_rt_infoval.html">cross_validate_rt_infoval()</a></code> all return <code>"skip"</code>
-for Brief-RC because canonical <code>rcicr</code> does not ship Brief-RC
-infoVal machinery. <code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> covers Brief-RC
-through an in-package implementation; see Section 6.9.2.</p>
+for Brief-RC because the original <code>rcicr</code> does not ship
+Brief-RC infoVal machinery. <code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> covers
+Brief-RC through an in-package implementation; see Section 6.9.2.</p>
 <p><code><a href="../reference/run_diagnostics.html">run_diagnostics()</a></code> runs every check whose required inputs
 are available. The <code>Skipped checks</code> list names what is
 missing; nothing errors silently and nothing runs halfway.</p>

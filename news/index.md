@@ -16,7 +16,7 @@
   [`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md):
   per-producer informational value with a reference distribution keyed
   on each producer’s actual trial count, closing the pool-size
-  calibration gap in canonical
+  calibration gap in the original
   [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
   for Brief-RC. Embeds the sampling-without-replacement fix from
   rcicrely v0.2.1. Exposes a `with_replacement` argument (`"auto"` /
