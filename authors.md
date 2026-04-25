@@ -3,6 +3,7 @@
 ## Authors
 
 - **Manuel Oliveira**. Author, maintainer.
+  [](https://orcid.org/0000-0002-6220-0695)
 
 ## Citation
 
@@ -13,14 +14,14 @@ Oliveira M (2026). *rcicrdiagnostics: Data quality diagnostics for
 reverse correlation experiments in social psychology using the rcicr
 package*.
 [doi:10.5281/zenodo.19734757](https://doi.org/10.5281/zenodo.19734757).
-R package version 0.2.0,
+R package version 0.2.1,
 <https://github.com/olivethree/rcicrdiagnostics>.
 
     @Manual{,
       title = {{rcicrdiagnostics}: Data quality diagnostics for reverse correlation experiments in social psychology using the rcicr package},
       author = {Manuel Oliveira},
       year = {2026},
-      note = {R package version 0.2.0},
+      note = {R package version 0.2.1},
       url = {https://github.com/olivethree/rcicrdiagnostics},
       doi = {10.5281/zenodo.19734757},
     }
