@@ -3,8 +3,6 @@
 A toolkit for data-quality diagnostics in reverse correlation
 experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
 
-[![DOI](https://zenodo.org/badge/1219369681.svg)](https://doi.org/10.5281/zenodo.19734757)
-
 > **Status:** in development. The API is not yet stable and the package
 > is not on CRAN. Distribution is GitHub-only.
 
