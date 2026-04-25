@@ -1,23 +1,29 @@
 #' Per-participant information-value (infoVal) summary
 #'
-#' Computes the information value (infoVal; Brinkman et al., 2019) for every
-#' participant and returns a pass / warn / fail summary plus a
-#' per-participant table flagging those below the `threshold`.
+#' Computes per-participant information value (infoVal; Brinkman et al.,
+#' 2019) via the canonical `rcicr` 2IFC pipeline and returns a tidy
+#' per-participant table. This is the thin compatibility wrapper around
+#' [`rcicr::computeInfoVal2IFC()`]. For a richer, paradigm-agnostic
+#' diagnostic (group-mean z, random-responder calibration check,
+#' face-mask z-lift, interpretation bullets), see [diagnose_infoval()].
 #'
-#' infoVal is a z-like score describing how far a participant's
-#' classification image (CI) is from a null-response reference
-#' distribution. Values at or below `1.96` are effectively
-#' indistinguishable from noise; higher values indicate meaningful
-#' signal.
+#' Reported per-producer infoVal is paradigm- and target-dependent.
+#' Brinkman et al. (2019, p. 12) report 54-68% of 2IFC gender
+#' participants clearing z = 1.96 (median 3-4). Schmitz et al. (2024)
+#' report Brief-RC infoVals below 1.96 across all conditions in both of
+#' their experiments. The status returned here therefore does not
+#' `"fail"` on a per-participant headcount alone: it returns `"pass"`
+#' when the median per-participant z is positive and `"warn"`
+#' otherwise. Use [diagnose_infoval()] when you need a proper verdict
+#' (random-responder calibration + group-mean z + masking).
 #'
 #' The 2IFC path delegates to [`rcicr::batchGenerateCI2IFC()`] and
 #' [`rcicr::computeInfoVal2IFC()`] from the canonical `rcicr` package
-#' (Dotsch, 2016; v1.0.1 on GitHub as of 2023). Canonical `rcicr` does
-#' not expose Brief-RC-specific CI or infoVal functions, so the Brief-RC
-#' path returns a `"skip"` result. A correct Brief-RC infoVal requires
-#' a reference distribution matched to each participant's trial count
-#' (not the pool size stored in the rdata), and implementing that
-#' correctly is deferred to the companion `rcicrely` package.
+#' (Dotsch, 2016; v1.0.1). Canonical `rcicr` uses a pool-size reference
+#' distribution and does not expose a Brief-RC path. The Brief-RC route
+#' here returns a `"skip"` result and points users at
+#' [diagnose_infoval()], which uses an in-package native Brief-RC
+#' implementation with a per-trial-count reference distribution.
 #'
 #' **Side effect (2IFC).** `rcicr` caches a reference distribution inside
 #' the supplied `rdata` file on the first call. Subsequent calls reuse
@@ -38,8 +44,8 @@
 #'
 #' @return An [rcdiag_result()] object. For 2IFC, `data$per_participant`
 #'   has one row per participant with `participant_id`, `infoval`, and
-#'   `meaningful` (logical: `infoval >= threshold`). For Brief-RC, a
-#'   `"skip"` result with an explanatory message.
+#'   `above_threshold` (logical: `infoval >= threshold`). For Brief-RC,
+#'   a `"skip"` result pointing the user at [diagnose_infoval()].
 #'
 #' @references
 #' Brinkman, L., Goffin, S., van de Schoot, R., van Haren, N. E., Dotsch,
@@ -77,12 +83,10 @@ compute_infoval_summary <- function(responses,
     return(rcdiag_result(
       "skip", label,
       c(
-        "Brief-RC infoVal is not supported by rcicrdiagnostics.",
-        "Canonical rcicr (Dotsch, v1.0.1) does not expose Brief-RC CI or",
-        "infoVal machinery, and a correct Brief-RC infoVal needs a",
-        "reference distribution matched to each participant's trial",
-        "count rather than the rdata pool size. Implementation is",
-        "planned for the companion rcicrely package."
+        "compute_infoval_summary() is the thin canonical-rcicr wrapper,",
+        "which does not support Brief-RC. Use diagnose_infoval() instead --",
+        "it ships an in-package native Brief-RC infoVal with a",
+        "per-trial-count reference distribution."
       ),
       data = list(method = "briefrc")
     ))
@@ -125,34 +129,32 @@ compute_infoval_summary <- function(responses,
   )
   ids <- extract_participant_ids(names(cis), baseimage, col_participant)
   per_p <- data.frame(
-    participant_id = ids,
-    infoval        = unname(per_participant),
-    meaningful     = unname(per_participant) >= threshold,
+    participant_id  = ids,
+    infoval         = unname(per_participant),
+    above_threshold = unname(per_participant) >= threshold,
     stringsAsFactors = FALSE
   )
 
   n_total <- nrow(per_p)
-  n_meaningful <- sum(per_p$meaningful)
-  pct_meaningful <- n_meaningful / n_total
+  n_above <- sum(per_p$above_threshold)
+  pct_above <- n_above / n_total
+  med_z <- stats::median(per_p$infoval)
 
-  status <- if (pct_meaningful >= 0.80) {
-    "pass"
-  } else if (pct_meaningful >= 0.50) {
-    "warn"
-  } else {
-    "fail"
-  }
+  # Per-producer z is structurally low even for compliant data. Refuse to
+  # "fail" purely on a headcount; "pass" when the median is positive,
+  # "warn" otherwise. Use diagnose_infoval() for a real verdict.
+  status <- if (is.finite(med_z) && med_z > 0) "pass" else "warn"
 
   detail <- c(
     sprintf(
       "%d of %d participants have infoVal >= %.2f (%.1f%%).",
-      n_meaningful, n_total, threshold, 100 * pct_meaningful
+      n_above, n_total, threshold, 100 * pct_above
     ),
     sprintf(
       "InfoVal range: [%.2f, %.2f]; median %.2f.",
-      min(per_p$infoval), max(per_p$infoval),
-      stats::median(per_p$infoval)
-    )
+      min(per_p$infoval), max(per_p$infoval), med_z
+    ),
+    "Per-producer z is structurally low; use diagnose_infoval() for the full picture."
   )
 
   rcdiag_result(

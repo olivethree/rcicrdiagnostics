@@ -41,29 +41,35 @@ flagged as likely noise. Default \code{1.96}.}
 \value{
 An \code{\link[=rcdiag_result]{rcdiag_result()}} object. For 2IFC, \code{data$per_participant}
 has one row per participant with \code{participant_id}, \code{infoval}, and
-\code{meaningful} (logical: \code{infoval >= threshold}). For Brief-RC, a
-\code{"skip"} result with an explanatory message.
+\code{above_threshold} (logical: \code{infoval >= threshold}). For Brief-RC,
+a \code{"skip"} result pointing the user at \code{\link[=diagnose_infoval]{diagnose_infoval()}}.
 }
 \description{
-Computes the information value (infoVal; Brinkman et al., 2019) for every
-participant and returns a pass / warn / fail summary plus a
-per-participant table flagging those below the \code{threshold}.
+Computes per-participant information value (infoVal; Brinkman et al.,
+2019) via the canonical \code{rcicr} 2IFC pipeline and returns a tidy
+per-participant table. This is the thin compatibility wrapper around
+\code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}}. For a richer, paradigm-agnostic
+diagnostic (group-mean z, random-responder calibration check,
+face-mask z-lift, interpretation bullets), see \code{\link[=diagnose_infoval]{diagnose_infoval()}}.
 }
 \details{
-infoVal is a z-like score describing how far a participant's
-classification image (CI) is from a null-response reference
-distribution. Values at or below \code{1.96} are effectively
-indistinguishable from noise; higher values indicate meaningful
-signal.
+Reported per-producer infoVal is paradigm- and target-dependent.
+Brinkman et al. (2019, p. 12) report 54-68\% of 2IFC gender
+participants clearing z = 1.96 (median 3-4). Schmitz et al. (2024)
+report Brief-RC infoVals below 1.96 across all conditions in both of
+their experiments. The status returned here therefore does not
+\code{"fail"} on a per-participant headcount alone: it returns \code{"pass"}
+when the median per-participant z is positive and \code{"warn"}
+otherwise. Use \code{\link[=diagnose_infoval]{diagnose_infoval()}} when you need a proper verdict
+(random-responder calibration + group-mean z + masking).
 
 The 2IFC path delegates to \code{\link[rcicr:batchGenerateCI2IFC]{rcicr::batchGenerateCI2IFC()}} and
 \code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}} from the canonical \code{rcicr} package
-(Dotsch, 2016; v1.0.1 on GitHub as of 2023). Canonical \code{rcicr} does
-not expose Brief-RC-specific CI or infoVal functions, so the Brief-RC
-path returns a \code{"skip"} result. A correct Brief-RC infoVal requires
-a reference distribution matched to each participant's trial count
-(not the pool size stored in the rdata), and implementing that
-correctly is deferred to the companion \code{rcicrely} package.
+(Dotsch, 2016; v1.0.1). Canonical \code{rcicr} uses a pool-size reference
+distribution and does not expose a Brief-RC path. The Brief-RC route
+here returns a \code{"skip"} result and points users at
+\code{\link[=diagnose_infoval]{diagnose_infoval()}}, which uses an in-package native Brief-RC
+implementation with a per-trial-count reference distribution.
 
 \strong{Side effect (2IFC).} \code{rcicr} caches a reference distribution inside
 the supplied \code{rdata} file on the first call. Subsequent calls reuse

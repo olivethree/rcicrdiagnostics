@@ -30,7 +30,7 @@ test_that("compute_infoval_summary returns a tidy per-participant data frame", {
   )
   expect_s3_class(result, "rcdiag_result")
   expect_true(nrow(result$data$per_participant) == 3L)
-  expect_true(all(c("participant_id", "infoval", "meaningful")
+  expect_true(all(c("participant_id", "infoval", "above_threshold")
                   %in% names(result$data$per_participant)))
 })
 
