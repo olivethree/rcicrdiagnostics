@@ -78,7 +78,7 @@ R 4.1 or newer.
 ### Optional packages (needed only for the 2IFC infoVal-based checks)
 
 Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal) delegate
-the 2IFC path to the canonical `rcicr` package (Dotsch, 2016, 2023).
+the 2IFC path to the original `rcicr` package (Dotsch, 2016, 2023).
 **They return a `"skip"` result for Brief-RC** — see Section 6.9 for why.
 If you want the 2IFC infoVal checks, install `rcicr`. From Dotsch's own
 install instructions:
@@ -92,7 +92,7 @@ install.packages("devtools")
 devtools::install_github("rdotsch/rcicr")
 ```
 
-At the time of writing, the canonical `rcicr` is version 1.0.1 (2023),
+At the time of writing, the original `rcicr` is version 1.0.1 (2023),
 maintained by Ron Dotsch on
 [github.com/rdotsch/rcicr](https://github.com/rdotsch/rcicr).
 
@@ -761,7 +761,7 @@ participant's CI is from a null-response reference distribution. Values
 around or below `1.96` are effectively indistinguishable from noise;
 higher values indicate meaningful signal.
 
-The 2IFC path delegates the heavy lifting to the canonical `rcicr`
+The 2IFC path delegates the heavy lifting to the original `rcicr`
 package (Dotsch, v1.0.1 at the time of writing): `batchGenerateCI2IFC()`
 to build per-participant CIs and `computeInfoVal2IFC()` to score each
 against a simulated reference distribution. On the first call `rcicr`
@@ -832,7 +832,7 @@ metrics."* So "low individual infoVal" is the normal empirical
 finding for Brief-RC in the only published methodological evaluation
 of it.
 
-**There is a known calibration bug for Brief-RC in canonical rcicr.**
+**There is a known calibration bug for Brief-RC in the original rcicr.**
 `rcicr::computeInfoVal2IFC()` builds its random-responder reference
 distribution at the pool size (number of columns in the noise matrix
 it reconstructs internally), regardless of how many trials each
@@ -845,6 +845,23 @@ biased downward. This package ships an in-package `infoval()` whose
 reference is keyed on each producer's actual trial count, closing
 the gap. How much that lifts any given dataset's z is empirical and
 depends on the `n_trials / pool_size` ratio.
+
+**Why the simulator's 50/50 ±1 sampling is correct under standard
+Brief-RC.** A natural first worry on reading the simulator is that
+`infoval()` draws random responses with `sample(c(-1, 1), n_trials,
+replace = TRUE)` — a uniform 50/50 ±1 — when each Brief-RC trial
+actually involves picking 1 of 12 alternatives. The 50/50 is exact
+under the standard Brief-RC trial structure (Schmitz et al., 2024,
+p. 6): each trial shows 6 oriented and 6 inverted faces, so a random
+producer picks one of 12 with `P(response = +1) = 6/12 = 0.5`, and
+the chosen-stimulus-id sequence is uniform over the pool. The
+simulator's marginal joint distribution of `(chosen_stim, response)`
+therefore matches a random Brief-RC responder. Designs that depart
+from a balanced oriented/inverted split per trial, or that have
+trials overlapping on the pool in non-standard ways, will see a
+small calibration drift; for the standard 6/6 design — and
+correspondingly for any other balanced split such as 10/10 in
+Brief-RC 20 — the calibration is exact.
 
 **Group-mean vs. individual z.** The group-mean CI is built from N × T
 decisions across N producers, so its Frobenius norm is compared
@@ -1110,7 +1127,7 @@ full
 For Brief-RC, swap `rdata` for `noise_matrix` at the
 `check_stimulus_alignment` step. `compute_infoval_summary()`,
 `check_response_inversion()`, and `cross_validate_rt_infoval()` all
-return `"skip"` for Brief-RC because canonical `rcicr` does not ship
+return `"skip"` for Brief-RC because the original `rcicr` does not ship
 Brief-RC infoVal machinery. `diagnose_infoval()` covers Brief-RC
 through an in-package implementation; see Section 6.9.2.
 

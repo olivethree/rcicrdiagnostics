@@ -66,7 +66,7 @@ test_that("random-responder data produces near-zero random_z and low group z", {
   expect_lt(res$data$group_mean_z_unmasked, 1.96)
 })
 
-test_that("compliant data produces high group z but low individual z (the canonical pattern)", {
+test_that("compliant data produces high group z but low individual z (the typical pattern)", {
   skip_on_cran()
   d <- make_compliant_briefrc_data(n_prod = 20L, n_trials = 200L, bias = 0.06)
   res <- diagnose_infoval(

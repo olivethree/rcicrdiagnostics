@@ -30,7 +30,7 @@
 #' Yzerbyt (2024):
 #'
 #' 1. Sample `trial_counts[j]` stimulus ids from `1:n_pool` without
-#'    replacement when `trial_counts[j] <= n_pool` (the canonical case
+#'    replacement when `trial_counts[j] <= n_pool` (the typical case
 #'    for both 2IFC and Brief-RC), with replacement otherwise.
 #' 2. Sample `trial_counts[j]` responses uniformly from `{-1, +1}`.
 #' 3. Collapse `response` by `stim` via `mean()` (Brief-RC duplicate-
@@ -43,7 +43,7 @@
 #' using the reference matched to producer j's trial count. Producers
 #' sharing a trial count share a reference.
 #'
-#' Trial-count matching closes a calibration gap in canonical
+#' Trial-count matching closes a calibration gap in the original
 #' `rcicr::generateReferenceDistribution2IFC()`, which uses the full
 #' pool size for the reference even when individual producers see only
 #' a subset (relevant for Brief-RC).
@@ -72,6 +72,19 @@
 #' For 2IFC, `n_trials == n_pool` by definition, both branches of the
 #' heuristic resolve to without-replacement, and the question does not
 #' arise.
+#'
+#' **Response-marginal assumption.** The reference simulator draws
+#' random responses with `sample(c(-1, 1), n_trials, replace = TRUE)`
+#' — uniform 50/50 ±1. This is exact under the standard Brief-RC
+#' trial structure (Schmitz et al., 2024, p. 6), where each trial
+#' shows an equal number of oriented and inverted faces (6/6 in
+#' Brief-RC 12, 10/10 in Brief-RC 20), so a random producer's pick
+#' yields `P(response = +1) = 0.5`. For 2IFC the assumption is
+#' likewise exact (one oriented + one inverted per trial). Designs
+#' with an unbalanced oriented/inverted split per trial, or trials
+#' that overlap on the pool in non-standard ways, will see a small
+#' calibration drift; the simulator does not currently expose a knob
+#' for unbalanced splits.
 #'
 #' @param signal_matrix Pixels x participants numeric matrix of raw
 #'   masks (one column per producer).

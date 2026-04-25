@@ -1,7 +1,7 @@
 #' Per-participant information-value (infoVal) summary
 #'
 #' Computes per-participant information value (infoVal; Brinkman et al.,
-#' 2019) via the canonical `rcicr` 2IFC pipeline and returns a tidy
+#' 2019) via the original `rcicr` 2IFC pipeline and returns a tidy
 #' per-participant table. This is the thin compatibility wrapper around
 #' [`rcicr::computeInfoVal2IFC()`]. For a richer, paradigm-agnostic
 #' diagnostic (group-mean z, random-responder calibration check,
@@ -18,9 +18,9 @@
 #' (random-responder calibration + group-mean z + masking).
 #'
 #' The 2IFC path delegates to [`rcicr::batchGenerateCI2IFC()`] and
-#' [`rcicr::computeInfoVal2IFC()`] from the canonical `rcicr` package
-#' (Dotsch, 2016; v1.0.1). Canonical `rcicr` uses a pool-size reference
-#' distribution and does not expose a Brief-RC path. The Brief-RC route
+#' [`rcicr::computeInfoVal2IFC()`] from the original `rcicr` package
+#' (Dotsch, 2016; v1.0.1). The original `rcicr` uses a pool-size
+#' reference distribution and does not expose a Brief-RC path. The Brief-RC route
 #' here returns a `"skip"` result and points users at
 #' [diagnose_infoval()], which uses an in-package native Brief-RC
 #' implementation with a per-trial-count reference distribution.
@@ -83,7 +83,7 @@ compute_infoval_summary <- function(responses,
     return(rcdiag_result(
       "skip", label,
       c(
-        "compute_infoval_summary() is the thin canonical-rcicr wrapper,",
+        "compute_infoval_summary() is the thin original-rcicr wrapper,",
         "which does not support Brief-RC. Use diagnose_infoval() instead --",
         "it ships an in-package native Brief-RC infoVal with a",
         "per-trial-count reference distribution."
