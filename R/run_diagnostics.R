@@ -27,6 +27,13 @@
 #'   distribution; `NULL` disables infoVal checks even if `rdata` is
 #'   supplied. Default `NULL` because the reference simulation is slow
 #'   and unwanted by default; set e.g. `10000` to enable.
+#' @param face_mask Mask spec passed to [diagnose_infoval()]. Default
+#'   `"auto"` (Schmitz 2024 oval). Pass `NULL` to skip the masked-vs-
+#'   unmasked comparison, or any value [diagnose_infoval()] accepts.
+#' @param with_replacement Sampling regime forwarded to
+#'   [diagnose_infoval()] / [infoval()] for the across-trials reference
+#'   distribution. Default `"auto"` matches the standard Brief-RC
+#'   convention.
 #' @param ... Unused.
 #'
 #' @return An object of class `rcdiag_report`.
@@ -53,6 +60,8 @@ run_diagnostics <- function(responses,
                            col_response = "response",
                            col_rt = NULL,
                            infoval_iter = NULL,
+                           face_mask = "auto",
+                           with_replacement = "auto",
                            ...) {
   method <- resolve_method(method, rdata, noise_matrix)
 
@@ -106,6 +115,43 @@ run_diagnostics <- function(responses,
       skipped,
       "check_stimulus_alignment (no rdata / noise_matrix)",
       if (method == "2ifc") "check_version_compat (no rdata)"
+    )
+  }
+
+  # diagnose_infoval handles both paradigms (Brief-RC and 2IFC). It runs
+  # whenever infoval_iter is set and the relevant noise source is available.
+  can_diagnose <- !is.null(infoval_iter) &&
+    ((method == "2ifc" && !is.null(rdata)) ||
+       (method == "briefrc" && !is.null(noise_matrix)))
+  if (can_diagnose) {
+    results$diagnose_infoval <- tryCatch(
+      diagnose_infoval(
+        responses,
+        method           = method,
+        rdata            = rdata,
+        noise_matrix     = noise_matrix,
+        baseimage        = baseimage,
+        col_participant  = col_participant,
+        col_stimulus     = col_stimulus,
+        col_response     = col_response,
+        iter             = as.integer(infoval_iter),
+        face_mask        = face_mask,
+        with_replacement = with_replacement,
+        progress         = FALSE
+      ),
+      error = function(e) {
+        rcdiag_result(
+          "skip", "InfoVal diagnostic",
+          c("diagnose_infoval failed:", conditionMessage(e))
+        )
+      }
+    )
+  } else if (is.null(infoval_iter)) {
+    skipped <- c(skipped, "diagnose_infoval (need infoval_iter)")
+  } else {
+    skipped <- c(
+      skipped,
+      "diagnose_infoval (need rdata for 2IFC or noise_matrix for Brief-RC)"
     )
   }
 

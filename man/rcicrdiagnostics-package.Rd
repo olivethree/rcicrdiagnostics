@@ -4,9 +4,9 @@
 \name{rcicrdiagnostics-package}
 \alias{rcicrdiagnostics}
 \alias{rcicrdiagnostics-package}
-\title{rcicrdiagnostics: Data-Quality Diagnostics for Reverse Correlation Experiments}
+\title{rcicrdiagnostics: Data Quality Diagnostics for Reverse Correlation Experiments in Social Psychology Using the Rcicr Package}
 \description{
-A systematic battery of data-quality checks for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the 'rcicr' package and the Brief-RC pipeline (Schmitz et al., 2024) that uses direct noise matrix multiplication. Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.
+A toolkit that runs data-quality diagnostics for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the 'rcicr' package (Dotsch, 2016, 2023) and the Brief-RC pipeline (Schmitz, Rougier, & Yzerbyt, 2024). Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.
 }
 \seealso{
 Useful links:

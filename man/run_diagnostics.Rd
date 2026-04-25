@@ -16,6 +16,8 @@ run_diagnostics(
   col_response = "response",
   col_rt = NULL,
   infoval_iter = NULL,
+  face_mask = "auto",
+  with_replacement = "auto",
   ...
 )
 }
@@ -46,6 +48,15 @@ overrides.}
 distribution; \code{NULL} disables infoVal checks even if \code{rdata} is
 supplied. Default \code{NULL} because the reference simulation is slow
 and unwanted by default; set e.g. \code{10000} to enable.}
+
+\item{face_mask}{Mask spec passed to \code{\link[=diagnose_infoval]{diagnose_infoval()}}. Default
+\code{"auto"} (Schmitz 2024 oval). Pass \code{NULL} to skip the masked-vs-
+unmasked comparison, or any value \code{\link[=diagnose_infoval]{diagnose_infoval()}} accepts.}
+
+\item{with_replacement}{Sampling regime forwarded to
+\code{\link[=diagnose_infoval]{diagnose_infoval()}} / \code{\link[=infoval]{infoval()}} for the across-trials reference
+distribution. Default \code{"auto"} matches the standard Brief-RC
+convention.}
 
 \item{...}{Unused.}
 }
