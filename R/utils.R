@@ -77,3 +77,115 @@ ensure_attached <- function(pkgs) {
   }
   invisible(NULL)
 }
+
+# -----------------------------------------------------------------------------
+# Helpers below this line are ported from rcicrely (R/utils.R, v0.2.x).
+# Same MIT license, same author. Kept here so rcicrdiagnostics has no hard
+# dependency on rcicrely.
+# -----------------------------------------------------------------------------
+
+# Run `expr` under a fixed RNG seed and restore the caller's RNG state on
+# exit. NULL seed means "do nothing, run with the caller's RNG".
+with_seed <- function(seed, expr) {
+  if (is.null(seed)) return(force(expr))
+  if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    old <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    on.exit(assign(".Random.seed", old, envir = .GlobalEnv), add = TRUE)
+  } else {
+    on.exit(
+      rm(".Random.seed", envir = .GlobalEnv, inherits = FALSE),
+      add = TRUE
+    )
+  }
+  set.seed(seed)
+  force(expr)
+}
+
+# Optional cli progress bar. Returns an id usable by progress_tick / _done,
+# or NULL when show = FALSE.
+progress_start <- function(total, label, show = TRUE) {
+  if (!isTRUE(show)) return(NULL)
+  cli::cli_progress_bar(label, total = total, clear = TRUE)
+}
+
+progress_tick <- function(id) {
+  if (is.null(id)) return(invisible())
+  cli::cli_progress_update(id = id)
+}
+
+progress_done <- function(id) {
+  if (is.null(id)) return(invisible())
+  cli::cli_progress_done(id = id)
+}
+
+# Read a PNG or JPEG and return it as a 2D grayscale numeric matrix in
+# [0, 1]. Used for loading user-supplied face masks via load_face_mask().
+read_image_as_gray <- function(path) {
+  if (!file.exists(path)) {
+    cli::cli_abort("Image file not found: {.path {path}}")
+  }
+  ext <- tolower(tools::file_ext(path))
+  img <- switch(
+    ext,
+    png = {
+      if (!requireNamespace("png", quietly = TRUE)) {
+        cli::cli_abort(
+          "Reading PNG files requires the {.pkg png} package."
+        )
+      }
+      png::readPNG(path)
+    },
+    jpg = ,
+    jpeg = {
+      if (!requireNamespace("jpeg", quietly = TRUE)) {
+        cli::cli_abort(
+          "Reading JPEG files requires the {.pkg jpeg} package."
+        )
+      }
+      jpeg::readJPEG(path)
+    },
+    cli::cli_abort(
+      "Unsupported image extension {.val {ext}} for {.path {path}}."
+    )
+  )
+  if (length(dim(img)) == 2L) {
+    return(img)
+  }
+  nch <- dim(img)[3]
+  if (nch >= 3L) {
+    0.2126 * img[, , 1] + 0.7152 * img[, , 2] + 0.0722 * img[, , 3]
+  } else {
+    img[, , 1]
+  }
+}
+
+#' Load a face mask from a PNG or JPEG image
+#'
+#' Reads an image, converts to grayscale, and thresholds to a logical
+#' mask. White-on-black masks (the typical convention) become `TRUE`
+#' inside the face region and `FALSE` outside.
+#'
+#' Use this when you have a hand-crafted or anatomically tuned mask and
+#' want to feed it to [diagnose_infoval()] or [infoval()] via the `mask`
+#' argument. For the standard Schmitz 2024 oval, [face_mask()] is faster
+#' and adds no dependencies.
+#'
+#' @param path Path to a PNG or JPEG file. Reading PNG requires the
+#'   `png` package; reading JPEG requires `jpeg` (both Suggests).
+#' @param threshold Numeric in `[0, 1]`. Pixels with grayscale value
+#'   strictly greater than this are `TRUE`. Default `0.5`.
+#' @param invert If `TRUE`, the mask is inverted (useful for
+#'   black-on-white masks). Default `FALSE`.
+#'
+#' @return Logical vector of length `prod(img_dims)`, column-major (the
+#'   convention [face_mask()] also uses).
+#'
+#' @seealso [face_mask()], [diagnose_infoval()].
+#'
+#' @export
+load_face_mask <- function(path, threshold = 0.5, invert = FALSE) {
+  img <- read_image_as_gray(path)
+  out <- img > threshold
+  if (isTRUE(invert)) out <- !out
+  as.vector(out)
+}

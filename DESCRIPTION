@@ -1,6 +1,6 @@
 Package: rcicrdiagnostics
 Title: Data Quality Diagnostics for Reverse Correlation Experiments in Social Psychology Using the Rcicr Package
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Manuel", "Oliveira",
            email = "manuel.olivethree@gmail.com",
@@ -27,7 +27,9 @@ Imports:
 Suggests:
     dplyr,
     foreach,
+    jpeg,
     knitr,
+    png,
     rcicr,
     rmarkdown,
     testthat (>= 3.0.0),
