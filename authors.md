@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/olivethree/rcicrdiagnostics/blob/main/inst/CITATION)
+[`inst/CITATION`](https://github.com/olivethree/rcicrdiagnostics/blob/v0.2.0/inst/CITATION)
 
 Oliveira M (2026). *rcicrdiagnostics: Data quality diagnostics for
 reverse correlation experiments in social psychology using the rcicr
