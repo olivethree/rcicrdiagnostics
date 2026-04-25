@@ -157,7 +157,7 @@ If you use `rcicrdiagnostics` in your research, please cite it as:
 
 > Oliveira, M. (2026). *rcicrdiagnostics: Data quality diagnostics for
 > reverse correlation experiments in social psychology using the rcicr
-> package* (Version 0.1.0) \[R package\]. Zenodo.
+> package* (Version 0.2.0) \[R package\]. Zenodo.
 > <https://doi.org/10.5281/zenodo.19734757>
 
 The concept DOI above always resolves to the latest version. For

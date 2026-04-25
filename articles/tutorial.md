@@ -112,46 +112,371 @@ packageVersion("rcicrdiagnostics")
 
 ## 3. What data the package expects
 
-### Response data (both pipelines)
+This section is the data-preparation reference. Get the inputs right and
+the rest of the package just works; get them wrong and the diagnostics
+will tell you, but only after you have already collected the data.
 
-A trial-level data frame — one row per trial — that you either load from
-a CSV or build in R. At minimum it needs:
+### 3.1. Response data (both pipelines)
+
+The package expects a trial-level data object (one row per trial). It
+can be a `data.frame`, a `data.table`, a `tibble`, or any object that
+behaves like a data frame in R. The original source can be a CSV, an
+RData file, a Parquet file, a database query, or constructed
+programmatically. Whatever the source, by the time it reaches the
+diagnostic functions it is a tabular object with the columns described
+below.
 
 | Column           | Purpose                                                                                                                                                                                                                                               |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `participant_id` | Identifier for each participant. Character or integer is fine.                                                                                                                                                                                        |
-| `stimulus`       | The stimulus number for that trial. Must match the numbering used when the stimuli were generated.                                                                                                                                                    |
-| `response`       | The participant’s response on that trial. Coding depends on method.                                                                                                                                                                                   |
+| `participant_id` | Identifier for each participant. Character or integer.                                                                                                                                                                                                |
+| `stimulus`       | Stimulus number. Must match the numbering used when stimuli were generated (see §3.4 and §3.5).                                                                                                                                                       |
+| `response`       | Participant’s response on that trial. Coding depends on method (see §3.2).                                                                                                                                                                            |
 | `rt` (optional)  | Response time in milliseconds. Used by [`check_rt()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_rt.md) and [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md). |
 
 If your column names differ, every function accepts overrides via
 `col_participant`, `col_stimulus`, `col_response`, and `col_rt`.
 
-### Response coding by method
+### 3.2. Response coding by method
 
-- **`"2ifc"`**: `response` must be numeric `{-1, 1}`. The sign matters
-  because the CI is a weighted sum of the per-trial noise patterns: a
-  `+1` means the noise on that trial is added to the CI, a `-1` means
-  it’s subtracted. If responses are coded `{0, 1}` instead, the
-  “subtract” information is lost and the CI comes out close to blank.
-  This is one of the most common silent failures in RC data; Section 6.1
-  detects it.
-- **`"briefrc"`**: Following Schmitz et al. (2024), each trial is
-  recorded as one row with `stimulus` = id of the chosen noise pattern
-  and `response` = `+1` if the participant picked the oriented version
-  (`base + noise`) or `-1` if the inverted version (`base - noise`).
-  This matches how rcicr’s `genCI` adaptation is built.
+**`"2ifc"`**: `response` must be numeric `{-1, +1}`. The sign matters
+because the CI is a weighted sum of per-trial noise patterns. A `+1`
+means the noise on that trial is added to the CI; a `-1` means it is
+subtracted. If responses are coded `{0, 1}` instead, the “subtract”
+information is lost and the CI comes out close to blank. This is one of
+the most common silent failures in RC data; Section 6.1 detects it.
 
-### Auxiliary inputs by method
+**`"briefrc"`**: Following Schmitz et al. (2024), each trial is one row.
+`stimulus` is the pool id of the chosen noise pattern, and `response` is
+`+1` if the participant picked the oriented version (`base + noise`) or
+`-1` if the inverted version (`base − noise`). The unchosen alternatives
+are not recorded (see §3.4).
 
-- **2IFC** uses the `.RData` file produced by
-  [`rcicr::generateStimuli2IFC()`](https://rdrr.io/pkg/rcicr/man/generateStimuli2IFC.html)
-  plus the base image (the neutral face the noise was added to). Pass
-  these as `rdata` and `base_image`.
-- **Brief-RC** uses a **noise matrix**: a plain-text file with pixels as
-  rows and stimuli as columns, each cell a real-valued noise weight. For
-  128×128 images and 300 stimuli, the matrix is 16 384 rows × 300
-  columns. Pass as `noise_matrix`.
+### 3.3. Example response datasets
+
+A 2IFC dataset with three participants and four trials each. On every
+trial the participant saw two stimuli (one oriented and one inverted
+noise pattern superimposed on the same base face) and chose one:
+
+``` r
+responses_2ifc <- data.frame(
+  participant_id = rep(c("P01", "P02", "P03"), each = 4),
+  stimulus       = rep(1:4, times = 3),
+  response       = c( 1, -1,  1,  1,
+                     -1,  1,  1, -1,
+                      1,  1, -1,  1),
+  rt             = c(820, 910, 750, 880,
+                     680, 1040, 720, 950,
+                     900, 770, 990, 810)
+)
+responses_2ifc
+#>    participant_id stimulus response   rt
+#> 1             P01        1        1  820
+#> 2             P01        2       -1  910
+#> 3             P01        3        1  750
+#> 4             P01        4        1  880
+#> 5             P02        1       -1  680
+#> 6             P02        2        1 1040
+#> 7             P02        3        1  720
+#> 8             P02        4       -1  950
+#> 9             P03        1        1  900
+#> 10            P03        2        1  770
+#> 11            P03        3       -1  990
+#> 12            P03        4        1  810
+```
+
+A Brief-RC 12 dataset with the same three participants and four trials
+each. On every trial the participant saw 12 noisy faces (six
+oriented-inverted pairs drawn from the noise pool) and picked one. The
+row records the chosen stimulus’s pool id and whether the oriented (+1)
+or inverted (−1) version was selected:
+
+``` r
+responses_briefrc <- data.frame(
+  participant_id = rep(c("P01", "P02", "P03"), each = 4),
+  stimulus       = c( 47, 112,  8, 263,
+                      91,  17, 204,  55,
+                     188, 142, 261,  73),
+  response       = c( 1, -1,  1,  1,
+                     -1,  1, -1,  1,
+                      1,  1, -1, -1),
+  rt             = c(1100, 1340, 980, 1210,
+                      890, 1450, 1020, 1130,
+                     1280, 1190, 1360, 1080)
+)
+responses_briefrc
+#>    participant_id stimulus response   rt
+#> 1             P01       47        1 1100
+#> 2             P01      112       -1 1340
+#> 3             P01        8        1  980
+#> 4             P01      263        1 1210
+#> 5             P02       91       -1  890
+#> 6             P02       17        1 1450
+#> 7             P02      204       -1 1020
+#> 8             P02       55        1 1130
+#> 9             P03      188        1 1280
+#> 10            P03      142        1 1190
+#> 11            P03      261       -1 1360
+#> 12            P03       73       -1 1080
+```
+
+The structural difference between the two datasets is what `stimulus`
+indexes:
+
+| Aspect                           | 2IFC                             | Brief-RC 12                                                |
+|----------------------------------|----------------------------------|------------------------------------------------------------|
+| Alternatives shown per trial     | 2 (one oriented + one inverted)  | 12 (six oriented + six inverted, six noise pairs)          |
+| Rows recorded per trial          | 1                                | 1                                                          |
+| What `stimulus` indexes          | The trial’s stimulus pair        | The chosen pool item only                                  |
+| Range of `stimulus`              | 1 to `n_trials`                  | 1 to `pool_size`                                           |
+| Same id can repeat across trials | No (each trial has its own pair) | Depends on the experimenter’s sampling design (see §3.4.1) |
+| Unchosen alternatives recorded   | Not applicable (only two shown)  | No (see below)                                             |
+
+### 3.4. Brief-RC 12: how unselected stimuli are handled
+
+In a Brief-RC 12 trial, 12 noisy faces are shown and the participant
+picks one. The 11 unselected faces are **not recorded as separate rows**
+and are **not assigned a zero response**. They are simply absent from
+the dataset.
+
+This is the convention Schmitz et al. (2024) use and the one this
+package expects. Mathematically, the per-producer mask is built from the
+chosen stimuli only:
+
+    mask = (noise_matrix[, chosen_stimuli] %*% chosen_responses) /
+             number_of_unique_chosen_stimuli
+
+The unselected faces contribute nothing to the mask because their noise
+patterns never enter the matrix multiplication. They are implicitly
+weighted at zero, but no zero row is needed in the data: their absence
+is the zero. Recording them as rows with `response = 0` would inflate
+the divisor and shrink the resulting mask.
+
+A common pitfall is the “expanded” format with 12 rows per trial,
+weighting the chosen face `+1` and the unchosen `−1/11`. Do not use that
+format. It is not what Schmitz et al. describe and not what this
+package’s Brief-RC path consumes.
+
+#### 3.4.1. Sampling design: how pool items are distributed across trials
+
+Whether a given pool item appears on more than one Brief-RC trial is a
+**design decision the experimenter makes**, not a property of the
+paradigm itself. Three regimes are common.
+
+1.  **Without replacement at the presentation level (the only path open
+    when `n_trials × stim_per_trial == pool_size`).** Each pool item is
+    shown exactly once across the whole task. Any given producer
+    therefore cannot choose the same pool item twice. After the task,
+    the producer’s recorded `stimulus` column has at most `n_trials`
+    distinct values and no duplicates. Schmitz et al.
+
+    2024. Experiment 1 used this regime: 60 trials × 12 alternatives =
+          720 presentations, exactly matching their pool size of 720.
+
+2.  **With replacement at the presentation level (the necessary path
+    when `n_trials × stim_per_trial > pool_size`).** Pool items are
+    drawn at random, possibly with repetition, when the task requires
+    more presentations than the pool can supply uniquely. A producer can
+    therefore choose the same pool item on two different trials,
+    possibly with the same response sign or the opposite. Schmitz et
+    al. (2024) Experiment 2 was in this regime: Brief-RC 12 had 250
+    trials × 12 = 3000 presentations against a 2000-item pool.
+
+3.  **Hybrid designs** (e.g., partial blocks, Latin squares,
+    counterbalanced subsets per condition). Treat these as
+    with-replacement at the analysis level unless your design guarantees
+    no repetition.
+
+**What this package assumes.** The Brief-RC analysis path is
+intentionally agnostic to which regime you ran. Internally, before
+computing the per-producer mask, it collapses any duplicated `stimulus`
+ids in a producer’s data using `mean(response)`, exactly as Schmitz et
+al.’s `genMask()` formulation does. So:
+
+- If the same pool item was chosen twice with the **same** response
+  sign, it contributes once with full weight.
+- If chosen twice with **opposite** response signs, the two cancel and
+  it contributes zero.
+- The `genMask()` divisor is then `length(unique(chosen_stimuli))`, not
+  `n_trials`.
+
+**Downstream effects of the sampling regime.** The two practical
+consequences for analysis are:
+
+| Sampling regime                   | Producer’s data                          | `length(unique(chosen_stimuli))` vs. `n_trials` | InfoVal reference distribution                                       |
+|-----------------------------------|------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------|
+| Without replacement (Exp 1 style) | No duplicate `stimulus` ids per producer | Equal                                           | Sample stim ids without replacement when simulating random producers |
+| With replacement (Exp 2 style)    | Duplicates possible                      | Less than or equal                              | Sample stim ids with replacement when simulating random producers    |
+
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+picks the right reference-distribution sampling regime automatically: it
+samples without replacement when the producer’s trial count is at most
+the pool size, and with replacement otherwise. This is the calibration
+fix the function was originally written to address (described in
+§6.9.1). Users who designed their task with a custom regime should still
+pass their actual trial count via the `trial_counts` argument; the
+function does the rest.
+
+**InfoVal reference distributions outside this package.** Canonical
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
+builds its reference at the pool size regardless of the producer’s
+actual trial count, which is correct for 2IFC (where they coincide) but
+biases Brief-RC infoVal downward. If you are using stock `rcicr` rather
+than this package’s
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md),
+expect Brief-RC z-scores that systematically underestimate signal,
+particularly when `n_trials` is much smaller than `pool_size`.
+
+### 3.5. Auxiliary inputs
+
+Both pipelines need stimulus-side inputs in addition to the responses:
+2IFC needs the rcicr `.RData` and the base image; Brief-RC needs a noise
+matrix and the base image.
+
+#### 3.5.1. The rcicr `.RData` object (2IFC)
+
+[`rcicr::generateStimuli2IFC()`](https://rdrr.io/pkg/rcicr/man/generateStimuli2IFC.html)
+saves a single `.RData` file alongside the stimulus PNGs. When you
+[`load()`](https://rdrr.io/r/base/load.html) it into R, several objects
+appear in the environment. The names are short and not self-explanatory;
+the table below spells out what each is and what you would use it for.
+
+| Object                | What it is (plain language)                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|-----------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `base_face_files`     | Named list of file paths to the original face images you supplied. The names you used (e.g. `"base"`) are the labels you later pass as `baseimage = "..."` when computing CIs.                                                                                                                                                                                                                                                                        |
+| `base_faces`          | The base images themselves, loaded into R as numeric matrices of grayscale pixel values in `[0, 1]`. One matrix per label, e.g. `base_faces$base`. Shape is `img_size` x `img_size`.                                                                                                                                                                                                                                                                  |
+| `img_size`            | Side length of the (square) images in pixels.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `n_trials`            | Number of stimulus pairs (i.e. unique noise patterns) generated.                                                                                                                                                                                                                                                                                                                                                                                      |
+| `noise_type`          | Type of noise basis used. The rcicr default and only well-tested option is `"sinusoid"`.                                                                                                                                                                                                                                                                                                                                                              |
+| `p`                   | The **noise basis**. A list, the active fields are `p$patches` (a stack of standard sinusoidal patterns at multiple scales, orientations, and phases) and `p$patchIdx` (an index that maps positions in a parameter vector to entries in `p$patches`). Think of `p$patches` as a dictionary of basic sinusoidal “ingredients”; the actual noise pattern shown on any given trial is a weighted mix of these ingredients.                              |
+| `stimuli_params`      | The **per-trial recipe** for combining `p`’s ingredients. A named list of matrices, one matrix per base face. Each row is one trial; each entry on that row is the contrast weight (how much of one ingredient to use). To reconstruct the noise pattern shown on, say, trial 42 with the base face labelled `"base"`, you call `rcicr::generateNoiseImage(stimuli_params[["base"]][42, ], p)` (output: a 2D matrix the same size as the base image). |
+| `seed`                | Random seed passed at generation, for reproducibility.                                                                                                                                                                                                                                                                                                                                                                                                |
+| `label`               | Label string passed to `generateStimuli2IFC()` (appears in saved filenames; not load-bearing for analysis).                                                                                                                                                                                                                                                                                                                                           |
+| `stimulus_path`       | Output directory where the stimuli were written at generation time.                                                                                                                                                                                                                                                                                                                                                                                   |
+| `trial`               | Internal bookkeeping object; not consumed by downstream functions.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `use_same_parameters` | If `TRUE`, the same noise was reused across multiple base faces (e.g. for a controlled cross-condition comparison). If `FALSE`, each base face got an independent draw of `stimuli_params`.                                                                                                                                                                                                                                                           |
+| `generator_version`   | The rcicr version that produced the file.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `reference_norms`     | A vector of random-responder Frobenius norms. **Not present at first**. It is created and inserted into the `.RData` file the first time you call [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html) on this file (rcicr caches the simulation in place). If you need the original `.RData` untouched, copy it before running infoVal.                                                                            |
+
+For computing CIs the load-bearing objects are `base_faces`,
+`stimuli_params`, `p`, and `img_size`. rcicr reconstructs each trial’s
+noise pattern from `stimuli_params` and `p`, then averages those
+patterns across the trials a given participant selected to produce that
+participant’s CI. The full set of trial-level noise images is not stored
+in the `.RData`; it is recomputed on demand.
+
+Filename note: on macOS the file is saved with a lowercase `.Rdata`
+extension. Searches with `pattern = "\\.RData$"` will miss it; use
+`ignore.case = TRUE`.
+
+#### 3.5.2. Brief-RC noise matrix
+
+The Brief-RC pipeline expects a noise matrix supplied as either:
+
+1.  a path to a plain-text file readable by
+    [`read_noise_matrix()`](https://olivethree.github.io/rcicrdiagnostics/reference/read_noise_matrix.md)
+    (space-, tab-, or comma-delimited), or
+
+2.  an already-loaded numeric matrix.
+
+Shape: `n_pixels` rows by `pool_size` columns. Each column is one noise
+pattern flattened in column-major order. For a 128 x 128 image and a
+pool of 300 patterns, that is 16,384 rows by 300 columns.
+
+The pool size and the maximum value in your `stimulus` column must
+agree.
+[`check_stimulus_alignment()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_stimulus_alignment.md)
+reports any mismatch.
+
+If you generated your Brief-RC pool with
+[`rcicr::generateStimuli2IFC()`](https://rdrr.io/pkg/rcicr/man/generateStimuli2IFC.html)
+(the path Schmitz et al. used), the matrix can be reconstructed from
+`stimuli_params` and `p` as described above. If you generated it
+elsewhere, save the columns directly with
+`data.table::fwrite(mat, sep = " ", col.names = FALSE)`.
+
+#### 3.5.3. Base image
+
+Both pipelines depend on a base image. Requirements:
+
+- **Square**, e.g. 256x256 or 512x512 pixels.
+- **Grayscale** (one channel). RGB images error out with
+  non-conformable-array messages from `rcicr`.
+- **Pixel range `[0, 1]`**, which is what
+  [`png::readPNG()`](https://rdrr.io/pkg/png/man/readPNG.html) and
+  [`jpeg::readJPEG()`](https://rdrr.io/pkg/jpeg/man/readJPEG.html)
+  produce.
+- **Centred face** with the eye, nose, and mouth regions roughly at the
+  geometry assumed by
+  [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md)
+  (eyes near the upper third, mouth near the lower third). The default
+  [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md)
+  geometry follows Schmitz, Rougier, & Yzerbyt (2024).
+
+The conventional base face is a morph of several individual faces, which
+removes idiosyncratic features and centres the geometry. The
+[webmorphR](https://github.com/debruine/webmorphR) package by Lisa
+DeBruine is the current best-in-class tool for producing such base
+images reproducibly. A typical pipeline:
+
+``` r
+# install.packages("webmorphR")  # CRAN
+library(webmorphR)
+
+stim <- read_stim("path/to/raw_face_images/") |>
+  auto_delin() |>                       # automatic landmark delineation
+  align(procrustes = TRUE) |>           # Procrustes alignment across faces
+  crop(width = 0.85, height = 0.85) |>  # tight crop around the aligned face
+  to_size(c(256, 256)) |>               # force the rcicr-friendly size
+  greyscale() |>                        # one channel, in [0, 1]
+  avg()                                 # morph into a single average face
+
+write_stim(stim, dir = "stimuli/", names = "base", format = "png")
+```
+
+That writes `stimuli/base.png`, which is then suitable as input to
+`rcicr::generateStimuli2IFC(base_face_files = list(base = "stimuli/base.png"))`.
+For non-square crop, oval mask, and feature-aligned operations, see
+`?webmorphR::mask_oval` and `?webmorphR::crop_tem`. Cite webmorphR as
+DeBruine (2022).
+
+If you cannot use webmorphR (e.g. the input is already a single face
+photo and not a stack to morph), preparing the base image by hand is
+acceptable. In any image editor, convert to grayscale, crop to a square
+that fits the face roughly within the central 70%, and resize to the
+target dimensions. Both GIMP (free) and the open-source krita or even
+PowerPoint export will do this.
+
+#### 3.5.4. Face-region masks
+
+Section 6.9.2
+([`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md))
+accepts an optional logical mask that restricts the infoVal computation
+to a subset of pixels (for example, the face region). Three ways to
+obtain one:
+
+1.  **Programmatic, parametric.**
+    [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md)
+    produces an oval (or eyes / nose / mouth / upper / lower face) mask
+    sized to the image, matching Schmitz 2024 geometry by default:
+
+    ``` r
+    m <- face_mask(c(256L, 256L))                     # full oval
+    m_eyes  <- face_mask(c(256L, 256L), region = "eyes")
+    m_mouth <- face_mask(c(256L, 256L), region = "mouth")
+    ```
+
+2.  **Programmatic, image-based.** webmorphR’s `mask_oval()` (and
+    related `mask()` helpers) produces a feature-aligned mask from a
+    landmark template. Save as PNG and load with
+    [`load_face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/load_face_mask.md).
+
+3.  **Manual.** Open the base image in GIMP, PowerPoint, or any other
+    editor. Paint the face region white (255) and the rest black (0),
+    keeping the same dimensions as the base image, and export as PNG or
+    JPEG. Load with
+    `load_face_mask("path/to/mask.png", threshold = 0.5)`. For a
+    less-than-rigorous oval, PowerPoint’s ellipse shape filled white
+    over a black background works in under a minute.
 
 ## 4. A first diagnostic run
 
@@ -218,6 +543,7 @@ exact input that’s missing. So when you see
       - check_rt (no col_rt)
       - check_stimulus_alignment (no rdata / noise_matrix)
       - check_version_compat (no rdata)
+      - diagnose_infoval (need infoval_iter)
       - compute_infoval_summary (need rdata + infoval_iter)
       - check_response_inversion (needs infoval)
       - cross_validate_rt_infoval (needs infoval)
@@ -227,7 +553,7 @@ nothing has failed — you just haven’t handed
 the extra inputs those checks need. Section 7.1 walks through exactly
 what to pass for each one so you can progressively unlock them.
 
-## 5. The result object
+## 5. Result object
 
 Every single check returns a small list with a fixed shape. The package
 gives this shape a class name — `rcdiag_result` — so that printing and
@@ -270,7 +596,7 @@ summary(report)
 #> 4   response_bias   pass   Response bias
 ```
 
-## 6. The checks one by one
+## 6. Checks one by one
 
 Every example below uses synthetic data built inline, so the checks from
 Sections 6.1–6.8 run without any external files. The three infoVal-
@@ -579,12 +905,165 @@ head(iv$data$per_participant)
 
 Returned as an `rcdiag_result`. Status:
 
-- **pass** if ≥ 80% of participants have `infoval >= threshold`;
-- **warn** if 50–80% do;
-- **fail** otherwise (your data is mostly noise).
+- **pass** when the median per-participant `infoval` is positive;
+- **warn** otherwise.
 
-Use `$data$per_participant` to pull out individual participants’ scores
-and the `meaningful` flag for downstream exclusion.
+Use `$data$per_participant` to pull out individual scores and the
+`above_threshold` flag for downstream exclusion.
+
+[`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)
+deliberately does **not** return a **fail** status based on
+per-participant z alone. The reason is the subject of §6.9.1 below:
+per-producer z is structurally low even on healthy data, so a
+per-participant headcount is a misleading proxy for data quality. Use
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+(§6.9.2) for the real verdict.
+
+### 6.9.1. Why per-producer infoVal often looks “low”
+
+A common moment of confusion in RC analysis is opening
+[`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)’s
+output and seeing per-producer z below the 1.96 threshold, sometimes
+negative, even though data collection went smoothly. Three things are
+worth knowing before you conclude the data are broken.
+
+**The published baseline is paradigm- and target-dependent.** Brinkman
+et al. (2019, p. 12) report that on 2IFC for perceived gender — a
+strong, consensual target — individual infoVals cluster in the 3–4
+range, with 54–68% of participants clearing 1.96 (lab vs. online samples
+respectively). By contrast, Schmitz et al. (2024) applied infoVal to
+Brief-RC for a social-category target (“Chinese-looking face”), with an
+oval face mask, and reported infoVals **below 1.96 in every condition of
+both experiments**: Experiment 1 means were 1.54 (Traditional-RC), 1.93
+(Brief-RC12), and 1.74 (Brief-RC20) (p. 7); Experiment 2 means across
+comparison criteria ranged from 0.69 to 1.22. Their own interpretation
+(p. 13): *“infoVal scores were relatively low, regardless of the
+condition, signalling that increasing the number of trials may be
+beneficial to improve both metrics.”* So “low individual infoVal” is the
+normal empirical finding for Brief-RC in the only published
+methodological evaluation of it.
+
+**There is a known calibration bug for Brief-RC in canonical rcicr.**
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
+builds its random-responder reference distribution at the pool size
+(number of columns in the noise matrix it reconstructs internally),
+regardless of how many trials each producer actually completed. For
+2IFC, where every producer responds to every pool item once, pool size
+equals trial count, so the reference is correctly calibrated. For
+Brief-RC, where a producer samples only a subset of the pool, the
+reference sampling regime does not match the observed sampling regime,
+and the resulting z is biased downward. This package ships an in-package
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+whose reference is keyed on each producer’s actual trial count, closing
+the gap. How much that lifts any given dataset’s z is empirical and
+depends on the `n_trials / pool_size` ratio.
+
+**Group-mean vs. individual z.** The group-mean CI is built from N × T
+decisions across N producers, so its Frobenius norm is compared against
+a correspondingly tighter reference distribution; intuitively, noise
+averages down by √N. The Brinkman and Schmitz papers don’t compute a
+group-mean z directly, but mathematically it will exceed the
+individual-level median, and it is often the more defensible summary
+statistic when individual-level z is noisy.
+
+One additional interpretation, offered as *speculation*, not as an
+established finding: negative individual z does not imply “anti-signal.”
+InfoVal is direction-agnostic (a z-scored Frobenius norm has no sign in
+pixel space), so a producer responding “opposite” to the target would
+still score positive. Negative z is geometrically consistent with a
+coherent low-rank mask that fills less of the noise basis than a
+random-responder mask does — but neither Brinkman nor Schmitz report or
+test this, so treat it as a hypothesis, not a fact.
+
+What
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+automates:
+
+- The per-trial-count reference (fixes the pool-size calibration bug for
+  Brief-RC).
+- A random-responder calibration check, so you can see whether a
+  simulated random producer lands near z = 0 in your setup.
+- Group-mean z alongside individual z.
+- Optional face masking via
+  [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md),
+  matching Schmitz’s geometry.
+
+What it does **not** automate is the decision about whether your
+individual-level infoVals are high enough to report. That depends on
+your target, paradigm, and trial count, and the published baselines from
+the two papers cited above are the honest yardsticks.
+
+### 6.9.2. `diagnose_infoval()` — guided low/negative-z diagnostic
+
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+is the recommended entry point when individual infoVal looks low and you
+want to know whether the data is broken or merely structurally diluted.
+It walks through six checks and produces interpretation bullets, plus
+rich `$data` for plotting.
+
+The six steps:
+
+1.  Simulate the reference distribution at every unique trial count
+    present in the data.
+2.  Sanity-check the reference with a simulated random responder
+    (expected `|z|` close to 0; `|z| > 2` is a red flag).
+3.  Compute per-producer z **unmasked**.
+4.  Compute per-producer z with a **face mask** (default: oval matching
+    Schmitz 2024 geometry via
+    [`face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/face_mask.md)).
+5.  Compute the **group-mean CI’s** z against a reference matched to the
+    actual producer count and trial counts.
+6.  Tally per-producer z into bands (`< -1.96`, `[-1.96, 0)`,
+    `[0, 1.96)`, `>= 1.96`) and emit interpretation text.
+
+``` r
+report <- diagnose_infoval(
+  responses,
+  method       = "2ifc",
+  rdata        = "data-raw/generated/rcicr_2ifc_stimuli.RData",
+  iter         = 10000,
+  face_mask    = "auto",  # NULL skips masking; or pass a logical / matrix / path
+  seed         = 1L
+)
+print(report)
+report$data$random_responder_z       # ≈ 0 if calibration is correct
+report$data$group_mean_z_unmasked    # the publish-this number
+report$data$tally                    # per-producer z distribution
+```
+
+Both paradigms are supported. For `method = "briefrc"`,
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+uses an in-package implementation of Schmitz’s `genMask()` algebra and
+the per-trial-count reference distribution; no `rcicr` install is
+required. Pass `noise_matrix = ...`. For `method = "2ifc"`, the function
+calls `rcicr` to (a) compute per-producer CIs from `stimuli_params` and
+`p` via
+[`rcicr::batchGenerateCI2IFC()`](https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html),
+and (b) reconstruct each pool item’s noise pattern via
+[`rcicr::generateNoiseImage()`](https://rdrr.io/pkg/rcicr/man/generateNoiseImage.html)
+so the reference distribution can be simulated; `rcicr` therefore needs
+to be installed for this path. The reconstruction adds a few seconds for
+a typical `n_pool = 770` pool.
+
+#### A reporting template
+
+When you report infoVal, state exactly what reference distribution was
+used and which metric you computed. A template that matches the
+information the diagnostic returns:
+
+> *“Per-producer informational value (Brinkman et al., 2019) was
+> computed with a reference distribution matched to each producer’s
+> trial count (rather than to the pool size), as implemented in
+> [`rcicrdiagnostics::infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md).
+> \[If masked:\] We applied an oval face-region mask following Schmitz,
+> Rougier, and Yzerbyt (2024). A simulated random-responder check
+> returned z = Z.ZZ, consistent with a correctly calibrated reference
+> distribution. On the individual level, K of N producers exceeded z =
+> 1.96 (median z = Y.YY). The group-mean classification image yielded z
+> = X.XX.”*
+
+Do not paste this verbatim; adjust to your pipeline and drop any
+sentence that does not describe what you actually did.
 
 ### 6.10. `check_response_inversion()`
 
@@ -766,27 +1245,27 @@ vapply(report$results, `[[`, character(1), "status")
 #>          "pass"          "pass"          "pass"          "pass"
 ```
 
-### 7.1. Unlocking the skipped checks
+### 7.1. Additional checks
 
-By default — with only `responses` and `method` — only the four basic
-checks run. The remaining six are skipped and listed; each needs a
-specific additional input. The table is the full map:
+With only `responses` and `method`, four checks run. Six more are listed
+under `Skipped checks` and each requires a specific additional input:
 
-| Skipped check                                                                                                         | How to unlock                                                                  |
-|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| [`check_rt()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_rt.md)                                   | pass `col_rt = "rt"` (and make sure that column exists in `responses`)         |
-| [`check_stimulus_alignment()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_stimulus_alignment.md)   | pass `rdata = "..."` (2IFC) or `noise_matrix = "..."` (Brief-RC)               |
-| [`check_version_compat()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_version_compat.md)           | pass `rdata = "..."` (2IFC only)                                               |
-| [`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)     | pass `rdata` **and** `infoval_iter` (e.g. `10000`)                             |
-| [`check_response_inversion()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_inversion.md)   | pass `rdata` **and** `infoval_iter` (runs infoVal twice, so takes ~2× as long) |
-| [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md) | pass `rdata`, `infoval_iter`, **and** `col_rt`                                 |
+| Check                                                                                                                 | Additional input required                                                                                                                                    |
+|-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`check_rt()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_rt.md)                                   | `col_rt = "rt"` (the column must exist in `responses`)                                                                                                       |
+| [`check_stimulus_alignment()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_stimulus_alignment.md)   | `rdata = "..."` (2IFC) or `noise_matrix = "..."` (Brief-RC)                                                                                                  |
+| [`check_version_compat()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_version_compat.md)           | `rdata = "..."` (2IFC only)                                                                                                                                  |
+| [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)                   | `infoval_iter` plus `rdata` (2IFC) or `noise_matrix` (Brief-RC); both paradigms supported                                                                    |
+| [`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)     | `rdata` and `infoval_iter` (2IFC only; for Brief-RC use [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)) |
+| [`check_response_inversion()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_inversion.md)   | `rdata` and `infoval_iter` (runs infoVal twice, so it takes ~2x as long)                                                                                     |
+| [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md) | `rdata`, `infoval_iter`, and `col_rt`                                                                                                                        |
 
-`infoval_iter` is `NULL` by default because the reference-distribution
+`infoval_iter` defaults to `NULL` because the reference-distribution
 simulation at `10000` iterations takes a few minutes on the first call.
 `rcicr` caches the distribution inside the `.RData` file, so subsequent
-calls on the same file are fast — you pay that cost once per rdata.
+calls on the same file are fast (you pay the cost once per rdata).
 
-A full-battery invocation for a 2IFC analysis looks like this:
+A full call with every input supplied looks like this:
 
 ``` r
 full <- run_diagnostics(
@@ -799,23 +1278,25 @@ full <- run_diagnostics(
   infoval_iter = 10000
 )
 full
-# When every input is supplied, the "Skipped checks" block disappears
-# and you get all 10 checks in the report.
+# When every input is supplied, the "Skipped checks" block is empty
+# and the report contains all 10 checks.
 ```
 
 For Brief-RC, swap `rdata` for `noise_matrix` at the
-`check_stimulus_alignment` step. The infoVal-based checks (Sections
-6.9–6.11) will each return a `"skip"` result for Brief-RC regardless of
-what you pass — canonical `rcicr` does not ship Brief-RC infoVal
-machinery. See Section 6.9 for the full explanation.
+`check_stimulus_alignment` step.
+[`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md),
+[`check_response_inversion()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_response_inversion.md),
+and
+[`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md)
+all return `"skip"` for Brief-RC because canonical `rcicr` does not ship
+Brief-RC infoVal machinery.
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+covers Brief-RC through an in-package implementation; see Section 6.9.2.
 
-**On the name**:
 [`run_diagnostics()`](https://olivethree.github.io/rcicrdiagnostics/reference/run_diagnostics.md)
-runs *every check whose required inputs are available*, not “every check
-unconditionally”. The printed `Skipped checks` list is how it keeps that
-honest — nothing runs halfway, nothing errors silently. Treat the list
-as a to-do: each line tells you exactly what to add to the call to
-unlock that check.
+runs every check whose required inputs are available. The
+`Skipped checks` list names what is missing; nothing errors silently and
+nothing runs halfway.
 
 ## 8. Reading the report
 
@@ -889,7 +1370,7 @@ The raw field is **unchanged** regardless of which scaling option you
 pass to the CI-generating function. Only the scaled field changes. This
 distinction matters for every numerical analysis you perform on a CI.
 
-### 9.2. The five scaling options in `rcicr`
+### 9.2. Five scaling options in `rcicr`
 
 | Option        | What it does                                                                                                                          | When to consider                                                                                                                   |
 |---------------|---------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
