@@ -3,7 +3,7 @@
 A toolkit for data-quality diagnostics in reverse correlation experiments. Covers 2IFC (rcicr) and Brief-RC pipelines.
 
 <!-- badges: start -->
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19734757.svg)](https://doi.org/10.5281/zenodo.19734757)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19734757-blue)](https://doi.org/10.5281/zenodo.19734757)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html)
 [![GitHub release](https://img.shields.io/github/v/release/olivethree/rcicrdiagnostics?include_prereleases&sort=semver)](https://github.com/olivethree/rcicrdiagnostics/releases)
