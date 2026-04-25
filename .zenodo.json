@@ -1,14 +1,15 @@
 {
   "title": "rcicrdiagnostics: Data quality diagnostics for reverse correlation experiments in social psychology using the rcicr package",
   "description": "A toolkit that runs data-quality diagnostics for reverse correlation experiments. Supports both the standard two-image forced-choice (2IFC) pipeline via the rcicr package and the Brief-RC pipeline (Schmitz, Rougier, & Yzerbyt, 2024). Designed to be run before computing classification images or information values so that silent data-processing errors are caught early.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "upload_type": "software",
   "license": "MIT",
   "access_right": "open",
   "creators": [
     {
       "name": "Oliveira, Manuel",
-      "affiliation": ""
+      "affiliation": "Eindhoven University of Technology",
+      "orcid": "0000-0002-6220-0695"
     }
   ],
   "keywords": [

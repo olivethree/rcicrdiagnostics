@@ -1,3 +1,26 @@
+# rcicrdiagnostics 0.2.1
+
+## Metadata
+
+* Maintainer email updated to institutional address
+  (`m.j.barbosa.de.oliveira@tue.nl`).
+* ORCID `0000-0002-6220-0695` added to author metadata in
+  `DESCRIPTION` and `.zenodo.json`. Affiliation added to
+  `.zenodo.json` (Eindhoven University of Technology).
+
+## Documentation
+
+* `?infoval` and vignette §6.9.1 now state explicitly that the
+  reference simulator's uniform 50/50 ±1 response sampling is exact
+  under the standard Brief-RC trial structure (equal numbers of
+  oriented and inverted faces per trial: 6/6 in Brief-RC 12, 10/10
+  in Brief-RC 20), and call out that designs with unbalanced
+  oriented/inverted splits will incur a small calibration drift.
+* Wording sweep: "canonical" replaced with more neutral synonyms
+  ("original" for upstream-`rcicr` references; "typical",
+  "standard", or "foundational" elsewhere) across user-facing
+  documentation, NEWS, and tests.
+
 # rcicrdiagnostics 0.2.0
 
 ## New features

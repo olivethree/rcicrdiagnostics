@@ -1,10 +1,11 @@
 Package: rcicrdiagnostics
 Title: Data Quality Diagnostics for Reverse Correlation Experiments in Social Psychology Using the Rcicr Package
-Version: 0.2.0
+Version: 0.2.1
 Authors@R:
     person("Manuel", "Oliveira",
-           email = "manuel.olivethree@gmail.com",
-           role = c("aut", "cre"))
+           email = "m.j.barbosa.de.oliveira@tue.nl",
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-6220-0695"))
 Description: A toolkit that runs data-quality diagnostics for reverse
     correlation experiments. Supports both the standard two-image
     forced-choice (2IFC) pipeline via the 'rcicr' package (Dotsch,
