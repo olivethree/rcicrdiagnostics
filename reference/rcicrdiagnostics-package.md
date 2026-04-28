@@ -19,4 +19,5 @@ Useful links:
 
 ## Author
 
-**Maintainer**: Manuel Oliveira <manuel.olivethree@gmail.com>
+**Maintainer**: Manuel Oliveira <m.j.barbosa.de.oliveira@tue.nl>
+([ORCID](https://orcid.org/0000-0002-6220-0695))

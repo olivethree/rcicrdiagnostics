@@ -726,6 +726,39 @@ PNG or JPEG. Load with
 less-than-rigorous oval, PowerPoint’s ellipse shape filled white over a
 black background works in under a minute.</p></li>
 </ol>
+<div class="section level5">
+<h5 id="verify-the-mask-before-running-infoval">Verify the mask before running infoVal<a class="anchor" aria-label="anchor" href="#verify-the-mask-before-running-infoval"></a>
+</h5>
+<p>Whichever route you took, view the mask before passing it to
+<code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code>. <code><a href="../reference/plot_face_mask.html">plot_face_mask()</a></code> accepts
+the same input forms the diagnostic accepts (logical/numeric vector with
+<code>img_dims</code>, a matrix, or a PNG/JPEG path), and optionally
+overlays the mask on a base face so you can confirm it covers eyes,
+nose, and mouth as intended:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/face_mask.html">face_mask</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256L</span>, <span class="fl">256L</span><span class="op">)</span>, region <span class="op">=</span> <span class="st">"eyes"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Mask alone, on a grey background:</span></span>
+<span><span class="fu"><a href="../reference/plot_face_mask.html">plot_face_mask</a></span><span class="op">(</span><span class="va">m</span>, img_dims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256L</span>, <span class="fl">256L</span><span class="op">)</span>, main <span class="op">=</span> <span class="st">"eyes region"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Mask overlaid on the base face (most useful for verification):</span></span>
+<span><span class="fu"><a href="../reference/plot_face_mask.html">plot_face_mask</a></span><span class="op">(</span></span>
+<span>  <span class="va">m</span>,</span>
+<span>  img_dims   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">256L</span>, <span class="fl">256L</span><span class="op">)</span>,</span>
+<span>  base_image <span class="op">=</span> <span class="st">"data-raw/stimuli/base.jpg"</span>,</span>
+<span>  alpha      <span class="op">=</span> <span class="fl">0.4</span>,</span>
+<span>  col        <span class="op">=</span> <span class="st">"red"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># A hand-painted PNG mask, loaded directly from disk:</span></span>
+<span><span class="fu"><a href="../reference/plot_face_mask.html">plot_face_mask</a></span><span class="op">(</span><span class="st">"masks/oval_mask.png"</span>,</span>
+<span>               base_image <span class="op">=</span> <span class="st">"data-raw/stimuli/base.jpg"</span><span class="op">)</span></span></code></pre></div>
+<p>If the base image’s dimensions do not match the mask’s, the overlay
+falls back to a grey background and emits a warning rather than silently
+misaligning. Mismatches usually mean the mask was generated for a
+differently sized image — regenerate at the correct dimensions before
+continuing.</p>
+</div>
 </div>
 </div>
 </div>
@@ -735,7 +768,7 @@ black background works in under a minute.</p></li>
 <p>Here is a small synthetic 2IFC dataset — three participants, one
 hundred trials each, responses drawn uniformly from
 <code>{-1, 1}</code>:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">responses</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="fl">3</span><span class="op">)</span>,</span>
@@ -750,7 +783,7 @@ hundred trials each, responses drawn uniformly from
 <span><span class="co">#&gt; 5              1        5        1</span></span>
 <span><span class="co">#&gt; 6              1        6       -1</span></span></code></pre></div>
 <p>Run the full set of checks:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="va">report</span></span>
 <span><span class="co">#&gt; == Data-quality report (2ifc) ==</span></span>
@@ -805,7 +838,7 @@ progressively unlock them.</p>
 <p>Every single check returns a small list with a fixed shape. The
 package gives this shape a class name — <code>rcdiag_result</code> — so
 that printing and other helpers know how to handle it:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_response_coding.html">check_response_coding</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">r</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; List of 4</span></span>
@@ -834,7 +867,7 @@ CI generator.</li>
 in an <code>rcdiag_report</code>. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> flattens the
 collection into a tidy data frame — handy if you want to filter or log
 statuses:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span></span>
 <span><span class="co">#&gt;             check status           label</span></span>
 <span><span class="co">#&gt; 1 response_coding   pass Response coding</span></span>
@@ -856,7 +889,7 @@ in this vignette.</p>
 <p>Verifies the response column is coded as <code>method</code> expects.
 For 2IFC it detects the two most common miscodings and suggests the
 one-line fix.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ok</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span>
@@ -865,7 +898,7 @@ one-line fix.</p>
 <span><span class="fu"><a href="../reference/check_response_coding.html">check_response_coding</a></span><span class="op">(</span><span class="va">ok</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">[PASS]</span> Response coding</span></span>
 <span><span class="co">#&gt;   All 10 responses coded as {-1, 1}.</span></span></code></pre></div>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">miscoded</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span>,</span>
@@ -890,7 +923,7 @@ it flags participants whose count doesn’t match. <code>expected_n</code>
 can be a single number (everyone should have the same number of trials)
 or a vector of allowed counts (for designs with multiple trial-count
 conditions, e.g. <code>c(300, 500, 1000)</code>).</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">three_hundred_each</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">300</span><span class="op">)</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">300</span>, <span class="fl">3</span><span class="op">)</span>,</span>
@@ -899,7 +932,7 @@ conditions, e.g. <code>c(300, 500, 1000)</code>).</p>
 <span><span class="fu"><a href="../reference/check_trial_counts.html">check_trial_counts</a></span><span class="op">(</span><span class="va">three_hundred_each</span>, expected_n <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">[PASS]</span> Trial counts</span></span>
 <span><span class="co">#&gt;   All 3 participant{?s} have trial counts in {300}.</span></span></code></pre></div>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">with_a_short_participant</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">300</span>, <span class="fl">300</span>, <span class="fl">300</span>, <span class="fl">300</span>, <span class="fl">250</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fl">1</span>,</span>
@@ -933,7 +966,7 @@ duplicates</strong> — same participant, same stimulus, but different
 response or RT. Could be legitimate if your design deliberately repeats
 stimuli, or could be a merge error.</li>
 </ol>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">with_a_dup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
@@ -963,7 +996,7 @@ The threshold is <code>|mean| &gt; bias_threshold</code>, default
 corresponds to roughly an 80/20 split. Status:
 <strong>warn</strong>.</li>
 </ul>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">with_a_constant_responder</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">100</span>, <span class="fl">4</span><span class="op">)</span>,</span>
@@ -981,7 +1014,7 @@ corresponds to roughly an 80/20 split. Status:
 <span><span class="co">#&gt;   Group mean response: 0.215.</span></span></code></pre></div>
 <p>The per-participant breakdown is stored on the result so you can
 filter your dataset directly without re-computing:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_response_bias.html">check_response_bias</a></span><span class="op">(</span><span class="va">with_a_constant_responder</span><span class="op">)</span></span>
 <span><span class="va">r</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">per_participant</span></span>
 <span><span class="co">#&gt;    participant_id n_trials  mean constant is_biased</span></span>
@@ -1014,7 +1047,7 @@ mechanically.</li>
 Status logic: more than 15% fast trials for any participant is
 <strong>fail</strong>; any lesser flag is <strong>warn</strong>;
 otherwise <strong>pass</strong>.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">df_rt</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
@@ -1044,7 +1077,7 @@ participants programmatically.</p>
 refers to a valid column/row of the stimulus pool. For 2IFC the pool
 size is read from the <code>.RData</code> (<code>n_trials</code> field);
 for Brief-RC it is <code><a href="https://rdrr.io/r/base/nrow.html" class="external-link">ncol()</a></code> of the noise matrix.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">16384</span> <span class="op">*</span> <span class="fl">5</span>, sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">16384</span>, ncol <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="va">stim_ok</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, each <span class="op">=</span> <span class="fl">20</span><span class="op">)</span>,</span>
@@ -1054,7 +1087,7 @@ for Brief-RC it is <code><a href="https://rdrr.io/r/base/nrow.html" class="exter
 <span><span class="fu"><a href="../reference/check_stimulus_alignment.html">check_stimulus_alignment</a></span><span class="op">(</span><span class="va">stim_ok</span>, method <span class="op">=</span> <span class="st">"briefrc"</span>, noise_matrix <span class="op">=</span> <span class="va">mat</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">[PASS]</span> Stimulus alignment</span></span>
 <span><span class="co">#&gt;   5 of 5 pool stimuli are referenced in the response data.</span></span></code></pre></div>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stim_bad</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>,</span>
 <span>  stimulus       <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2L</span>, <span class="fl">10L</span>, <span class="fl">42L</span><span class="op">)</span>,   <span class="co"># 10 and 42 exceed the 5-col pool</span></span>
@@ -1078,7 +1111,7 @@ stimulus file doesn’t match the experiment you ran.</p>
 the installed <code>rcicr</code> version should match — subtle API or
 numerical changes between versions can silently produce different CIs
 from the same data.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".RData"</span><span class="op">)</span></span>
 <span><span class="va">generator_version</span> <span class="op">&lt;-</span> <span class="st">"0.4.0"</span></span>
 <span><span class="va">n_trials</span> <span class="op">&lt;-</span> <span class="fl">100L</span></span>
@@ -1101,7 +1134,7 @@ the current session.</p>
 <p><code><a href="../reference/read_noise_matrix.html">read_noise_matrix()</a></code> reads a space-delimited text file
 into a numeric matrix. For a self-contained example we just build one in
 memory and validate it:</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">16384</span> <span class="op">*</span> <span class="fl">5</span>, sd <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">16384</span>, ncol <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/validate_noise_matrix.html">validate_noise_matrix</a></span><span class="op">(</span><span class="va">mat</span>, expected_pixels <span class="op">=</span> <span class="fl">16384</span>, expected_stimuli <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">[PASS]</span> Noise matrix</span></span>
@@ -1139,7 +1172,7 @@ stored in the rdata. Calling
 <code>compute_infoval_summary(method = "briefrc")</code> returns a
 <code>"skip"</code> result with this explanation; proper Brief-RC
 infoVal is planned for the companion <code>rcicrely</code> package.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_infoval_summary.html">compute_infoval_summary</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1277,7 +1310,7 @@ matched to the actual producer count and trial counts.</li>
 <code>[-1.96, 0)</code>, <code>[0, 1.96)</code>,
 <code>&gt;= 1.96</code>) and emit interpretation text.</li>
 </ol>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnose_infoval.html">diagnose_infoval</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method       <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1336,7 +1369,7 @@ from what you meant to measure.</p>
 and once with every response sign-flipped — and flags participants whose
 flipped infoVal exceeds the original by at least <code>margin</code>
 (default <code>1.96</code>). Any non-zero count is a strong signal.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/check_response_inversion.html">check_response_inversion</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1369,7 +1402,7 @@ genuinely informative.</li>
 higher on infoVal, something about the measurement is off — possibly a
 click-pattern artefact.</li>
 </ol>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cross_validate_rt_infoval.html">cross_validate_rt_infoval</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1392,7 +1425,7 @@ depends on the experiment.</p>
 <p><code><a href="../reference/load_responses.html">load_responses()</a></code> is a thin wrapper around
 <code><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">data.table::fread()</a></code> (a fast CSV reader) that checks the
 required columns are present. Use it on your real data file:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">responses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_responses.html">load_responses</a></span><span class="op">(</span><span class="st">"my_data.csv"</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span></code></pre></div>
 <p>It returns a <code>data.table</code>, which behaves like a regular
 <code>data.frame</code> for the check functions — you don’t need to
@@ -1407,7 +1440,7 @@ call and returns the collected <code>rcdiag_report</code>. It works out
 the <code>method</code> automatically when exactly one of
 <code>rdata</code> or <code>noise_matrix</code> is supplied, so you
 usually don’t need to set <code>method</code> yourself:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Auto-detected as "2ifc" because rdata is supplied:</span></span>
 <span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, rdata <span class="op">=</span> <span class="st">"stimuli.RData"</span><span class="op">)</span></span>
 <span></span>
@@ -1415,7 +1448,7 @@ usually don’t need to set <code>method</code> yourself:</p>
 <span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, noise_matrix <span class="op">=</span> <span class="st">"noise_matrix_128.txt"</span><span class="op">)</span></span></code></pre></div>
 <p>Pass <code>method</code> explicitly when you have neither file on
 hand — for example, to sanity-check the response CSV by itself:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; == Data-quality report (2ifc) ==</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1459,7 +1492,7 @@ reference-distribution simulation. <strong>Default
 are skipped. Set to e.g. <code>10000</code> to enable them — expect the
 first call to take a few minutes.</li>
 </ul>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method     <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1491,7 +1524,7 @@ first call to take a few minutes.</li>
 <span><span class="co">#&gt;   - cross_validate_rt_infoval (needs infoval)</span></span></code></pre></div>
 <p>For programmatic access, the individual results live under
 <code>report$results</code>:</p>
-<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">report</span><span class="op">$</span><span class="va">results</span>, <span class="va">`[[`</span>, <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, <span class="st">"status"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; response_coding    trial_counts      duplicates   response_bias </span></span>
@@ -1562,7 +1595,7 @@ a few minutes on the first call. <code>rcicr</code> caches the
 distribution inside the <code>.RData</code> file, so subsequent calls on
 the same file are fast (you pay the cost once per rdata).</p>
 <p>A full call with every input supplied looks like this:</p>
-<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">full</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
 <span>  method       <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1877,7 +1910,7 @@ distances, effect sizes, pixel tests): compute from <code>ci$ci</code>,
 regardless of the scaling argument passed.</li>
 </ul>
 <p>A concrete workflow for a typical 2IFC study:</p>
-<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Generate CIs with autoscale for a visually-comparable set of</span></span>
 <span><span class="co">#    images (useful for rating-task stimuli or figure panels).</span></span>
 <span><span class="va">cis</span> <span class="op">&lt;-</span> <span class="fu">rcicr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html" class="external-link">batchGenerateCI2IFC</a></span><span class="op">(</span></span>
