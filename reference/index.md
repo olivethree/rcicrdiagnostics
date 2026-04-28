@@ -52,9 +52,6 @@
 - [`load_responses()`](https://olivethree.github.io/rcicrdiagnostics/reference/load_responses.md)
   : Load reverse correlation response data from a CSV file
 
-- [`plot_face_mask()`](https://olivethree.github.io/rcicrdiagnostics/reference/plot_face_mask.md)
-  : Plot a face mask for visual verification
-
 - [`rcdiag_report()`](https://olivethree.github.io/rcicrdiagnostics/reference/rcdiag_report.md)
   :
 

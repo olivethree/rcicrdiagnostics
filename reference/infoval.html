@@ -147,7 +147,7 @@ classification image mask, optionally restricted to a logical <code>mask</code>
 <code>iter</code> random masks at the same trial count <code>trial_counts[j]</code>,
 mirroring the <code>genMask()</code> construction of Schmitz, Rougier, &amp;
 Yzerbyt (2024):</p><ol><li><p>Sample <code>trial_counts[j]</code> stimulus ids from <code>1:n_pool</code> without
-replacement when <code>trial_counts[j] &lt;= n_pool</code> (the typical case
+replacement when <code>trial_counts[j] &lt;= n_pool</code> (the canonical case
 for both 2IFC and Brief-RC), with replacement otherwise.</p></li>
 <li><p>Sample <code>trial_counts[j]</code> responses uniformly from <code>{-1, +1}</code>.</p></li>
 <li><p>Collapse <code>response</code> by <code>stim</code> via <code><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean()</a></code> (Brief-RC duplicate-
@@ -157,7 +157,7 @@ stim rule).</p></li>
 </ol><p>The per-producer z-score is <code>(norm_j - median(ref)) / mad(ref)</code>,
 using the reference matched to producer j's trial count. Producers
 sharing a trial count share a reference.</p>
-<p>Trial-count matching closes a calibration gap in the original
+<p>Trial-count matching closes a calibration gap in canonical
 <code><a href="https://rdrr.io/pkg/rcicr/man/generateReferenceDistribution2IFC.html" class="external-link">rcicr::generateReferenceDistribution2IFC()</a></code>, which uses the full
 pool size for the reference even when individual producers see only
 a subset (relevant for Brief-RC).</p>
@@ -181,18 +181,6 @@ correctly because the genMask collapse rule averages duplicates by
 <p>For 2IFC, <code>n_trials == n_pool</code> by definition, both branches of the
 heuristic resolve to without-replacement, and the question does not
 arise.</p>
-<p><strong>Response-marginal assumption.</strong> The reference simulator draws
-random responses with <code>sample(c(-1, 1), n_trials, replace = TRUE)</code>
-— uniform 50/50 ±1. This is exact under the standard Brief-RC
-trial structure (Schmitz et al., 2024, p. 6), where each trial
-shows an equal number of oriented and inverted faces (6/6 in
-Brief-RC 12, 10/10 in Brief-RC 20), so a random producer's pick
-yields <code>P(response = +1) = 0.5</code>. For 2IFC the assumption is
-likewise exact (one oriented + one inverted per trial). Designs
-with an unbalanced oriented/inverted split per trial, or trials
-that overlap on the pool in non-standard ways, will see a small
-calibration drift; the simulator does not currently expose a knob
-for unbalanced splits.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
