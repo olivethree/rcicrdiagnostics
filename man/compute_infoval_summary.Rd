@@ -46,7 +46,7 @@ a \code{"skip"} result pointing the user at \code{\link[=diagnose_infoval]{diagn
 }
 \description{
 Computes per-participant information value (infoVal; Brinkman et al.,
-2019) via the canonical \code{rcicr} 2IFC pipeline and returns a tidy
+2019) via the original \code{rcicr} 2IFC pipeline and returns a tidy
 per-participant table. This is the thin compatibility wrapper around
 \code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}}. For a richer, paradigm-agnostic
 diagnostic (group-mean z, random-responder calibration check,
@@ -64,9 +64,9 @@ otherwise. Use \code{\link[=diagnose_infoval]{diagnose_infoval()}} when you need
 (random-responder calibration + group-mean z + masking).
 
 The 2IFC path delegates to \code{\link[rcicr:batchGenerateCI2IFC]{rcicr::batchGenerateCI2IFC()}} and
-\code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}} from the canonical \code{rcicr} package
-(Dotsch, 2016; v1.0.1). Canonical \code{rcicr} uses a pool-size reference
-distribution and does not expose a Brief-RC path. The Brief-RC route
+\code{\link[rcicr:computeInfoVal2IFC]{rcicr::computeInfoVal2IFC()}} from the original \code{rcicr} package
+(Dotsch, 2016; v1.0.1). The original \code{rcicr} uses a pool-size
+reference distribution and does not expose a Brief-RC path. The Brief-RC route
 here returns a \code{"skip"} result and points users at
 \code{\link[=diagnose_infoval]{diagnose_infoval()}}, which uses an in-package native Brief-RC
 implementation with a per-trial-count reference distribution.

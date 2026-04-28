@@ -452,6 +452,41 @@ example, the face region). Three ways to obtain one:
    For a less-than-rigorous oval, PowerPoint's ellipse shape filled
    white over a black background works in under a minute.
 
+##### Verify the mask before running infoVal
+
+Whichever route you took, view the mask before passing it to
+`diagnose_infoval()`. `plot_face_mask()` accepts the same input forms
+the diagnostic accepts (logical/numeric vector with `img_dims`, a
+matrix, or a PNG/JPEG path), and optionally overlays the mask on a
+base face so you can confirm it covers eyes, nose, and mouth as
+intended:
+
+```{r plot-face-mask, eval = FALSE}
+m <- face_mask(c(256L, 256L), region = "eyes")
+
+# Mask alone, on a grey background:
+plot_face_mask(m, img_dims = c(256L, 256L), main = "eyes region")
+
+# Mask overlaid on the base face (most useful for verification):
+plot_face_mask(
+  m,
+  img_dims   = c(256L, 256L),
+  base_image = "data-raw/stimuli/base.jpg",
+  alpha      = 0.4,
+  col        = "red"
+)
+
+# A hand-painted PNG mask, loaded directly from disk:
+plot_face_mask("masks/oval_mask.png",
+               base_image = "data-raw/stimuli/base.jpg")
+```
+
+If the base image's dimensions do not match the mask's, the overlay
+falls back to a grey background and emits a warning rather than
+silently misaligning. Mismatches usually mean the mask was generated
+for a differently sized image — regenerate at the correct dimensions
+before continuing.
+
 ## 4. A first diagnostic run
 
 Here is a small synthetic 2IFC dataset — three participants, one hundred

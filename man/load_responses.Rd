@@ -20,7 +20,7 @@ load_responses(
 only; downstream checks use this to select method-specific logic.}
 
 \item{col_participant, col_stimulus, col_response}{Column names that must
-exist in the file. Default to the package-wide canonical names.}
+exist in the file. Default to the package-wide standard names.}
 
 \item{col_rt}{Optional column name for response time. If provided, must
 exist in the file.}

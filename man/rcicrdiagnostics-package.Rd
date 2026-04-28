@@ -18,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Manuel Oliveira \email{manuel.olivethree@gmail.com}
+\strong{Maintainer}: Manuel Oliveira \email{m.j.barbosa.de.oliveira@tue.nl} (\href{https://orcid.org/0000-0002-6220-0695}{ORCID})
 
 }
 \keyword{internal}
