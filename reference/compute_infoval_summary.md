@@ -1,7 +1,7 @@
 # Per-participant information-value (infoVal) summary
 
 Computes per-participant information value (infoVal; Brinkman et al.,
-2019) via the canonical `rcicr` 2IFC pipeline and returns a tidy
+2019) via the original `rcicr` 2IFC pipeline and returns a tidy
 per-participant table. This is the thin compatibility wrapper around
 [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html).
 For a richer, paradigm-agnostic diagnostic (group-mean z,
@@ -91,7 +91,7 @@ The 2IFC path delegates to
 [`rcicr::batchGenerateCI2IFC()`](https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html)
 and
 [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
-from the canonical `rcicr` package (Dotsch, 2016; v1.0.1). Canonical
+from the original `rcicr` package (Dotsch, 2016; v1.0.1). The original
 `rcicr` uses a pool-size reference distribution and does not expose a
 Brief-RC path. The Brief-RC route here returns a `"skip"` result and
 points users at
