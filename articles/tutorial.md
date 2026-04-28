@@ -316,7 +316,7 @@ fix the function was originally written to address (described in
 pass their actual trial count via the `trial_counts` argument; the
 function does the rest.
 
-**InfoVal reference distributions outside this package.** Canonical
+**InfoVal reference distributions outside this package.** The original
 [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
 builds its reference at the pool size regardless of the producer’s
 actual trial count, which is correct for 2IFC (where they coincide) but
@@ -917,13 +917,18 @@ minutes) and caches it *inside the `.RData` file* so subsequent calls
 are fast. **Copy your `.RData` beforehand if you want the original
 untouched.**
 
-**Brief-RC is not currently supported.** Canonical `rcicr` does not
-expose Brief-RC-specific CI or infoVal machinery, and a correct Brief-RC
-infoVal needs a reference distribution matched to each participant’s
-trial count rather than the pool size stored in the rdata. Calling
-`compute_infoval_summary(method = "briefrc")` returns a `"skip"` result
-with this explanation; proper Brief-RC infoVal is planned for the
-companion `rcicrely` package.
+**Brief-RC is handled by
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md),
+not by this function.**
+[`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)
+is a thin wrapper around the original `rcicr` package and inherits its
+2IFC-only scope; calling it with `method = "briefrc"` returns a `"skip"`
+result. For Brief-RC infoVal, use
+[`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
+(§6.9.2), which is built on the in-package
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+and supports both paradigms with a reference distribution matched to
+each participant’s trial count.
 
 ``` r
 iv <- compute_infoval_summary(
@@ -993,6 +998,36 @@ and the resulting z is biased downward. This package ships an in-package
 whose reference is keyed on each producer’s actual trial count, closing
 the gap. How much that lifts any given dataset’s z is empirical and
 depends on the `n_trials / pool_size` ratio.
+
+**For standard 2IFC, this package’s
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+matches `rcicr` numerically.** When `n_trials == n_pool` for every
+producer and `mask = NULL` (the default 2IFC setup),
+[`rcicrdiagnostics::infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+and
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
+are mathematically equivalent: their reference distributions differ only
+by a column permutation of the noise matrix, and the Frobenius norm is
+permutation-invariant. Under a matched RNG seed they agree to
+floating-point tolerance. Switching from `rcicr` to this package on a
+standard 2IFC analysis will not change your published numbers — the
+in-package
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+only departs from `rcicr` when `n_trials != n_pool` (the Brief-RC
+calibration gap above) or when a `mask` is supplied.
+
+**Schmitz (2019) L1-vs-L2 and Schmitz (2020) MAD-constant critiques do
+not apply.** Both
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
+and
+[`rcicrdiagnostics::infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+compute the Frobenius (L2) norm `sqrt(sum(x * x))` on the producer’s
+mask, and both compute the reference dispersion via base R
+[`stats::mad()`](https://rdrr.io/r/stats/mad.html), which applies the
+Schmitz (2020) consistency constant `1.4826` by default. The 2019
+L1-vs-L2 issue is not present in either implementation, and the 2020
+“missing constant” complaint was withdrawn in the published erratum for
+exactly this reason. No further patching is needed on either side.
 
 **Why the simulator’s 50/50 ±1 sampling is correct under standard
 Brief-RC.** A natural first worry on reading the simulator is that

@@ -486,7 +486,7 @@ written to address (described in §6.9.1). Users who designed their task
 with a custom regime should still pass their actual trial count via the
 <code>trial_counts</code> argument; the function does the rest.</p>
 <p><strong>InfoVal reference distributions outside this
-package.</strong> Canonical <code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code>
+package.</strong> The original <code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code>
 builds its reference at the pool size regardless of the producer’s
 actual trial count, which is correct for 2IFC (where they coincide) but
 biases Brief-RC infoVal downward. If you are using stock
@@ -1164,14 +1164,14 @@ reference distribution (10 000 iterations by default — a few minutes)
 and caches it <em>inside the <code>.RData</code> file</em> so subsequent
 calls are fast. <strong>Copy your <code>.RData</code> beforehand if you
 want the original untouched.</strong></p>
-<p><strong>Brief-RC is not currently supported.</strong> Canonical
-<code>rcicr</code> does not expose Brief-RC-specific CI or infoVal
-machinery, and a correct Brief-RC infoVal needs a reference distribution
-matched to each participant’s trial count rather than the pool size
-stored in the rdata. Calling
-<code>compute_infoval_summary(method = "briefrc")</code> returns a
-<code>"skip"</code> result with this explanation; proper Brief-RC
-infoVal is planned for the companion <code>rcicrely</code> package.</p>
+<p><strong>Brief-RC is handled by <code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code>, not
+by this function.</strong> <code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code> is a
+thin wrapper around the original <code>rcicr</code> package and inherits
+its 2IFC-only scope; calling it with <code>method = "briefrc"</code>
+returns a <code>"skip"</code> result. For Brief-RC infoVal, use
+<code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> (§6.9.2), which is built on the
+in-package <code><a href="../reference/infoval.html">infoval()</a></code> and supports both paradigms with a
+reference distribution matched to each participant’s trial count.</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">iv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/compute_infoval_summary.html">compute_infoval_summary</a></span><span class="op">(</span></span>
 <span>  <span class="va">responses</span>,</span>
@@ -1238,6 +1238,31 @@ downward. This package ships an in-package <code><a href="../reference/infoval.h
 reference is keyed on each producer’s actual trial count, closing the
 gap. How much that lifts any given dataset’s z is empirical and depends
 on the <code>n_trials / pool_size</code> ratio.</p>
+<p><strong>For standard 2IFC, this package’s <code><a href="../reference/infoval.html">infoval()</a></code>
+matches <code>rcicr</code> numerically.</strong> When
+<code>n_trials == n_pool</code> for every producer and
+<code>mask = NULL</code> (the default 2IFC setup),
+<code><a href="../reference/infoval.html">rcicrdiagnostics::infoval()</a></code> and
+<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> are mathematically equivalent:
+their reference distributions differ only by a column permutation of the
+noise matrix, and the Frobenius norm is permutation-invariant. Under a
+matched RNG seed they agree to floating-point tolerance. Switching from
+<code>rcicr</code> to this package on a standard 2IFC analysis will not
+change your published numbers — the in-package <code><a href="../reference/infoval.html">infoval()</a></code>
+only departs from <code>rcicr</code> when
+<code>n_trials != n_pool</code> (the Brief-RC calibration gap above) or
+when a <code>mask</code> is supplied.</p>
+<p><strong>Schmitz (2019) L1-vs-L2 and Schmitz (2020) MAD-constant
+critiques do not apply.</strong> Both
+<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> and
+<code><a href="../reference/infoval.html">rcicrdiagnostics::infoval()</a></code> compute the Frobenius (L2) norm
+<code>sqrt(sum(x * x))</code> on the producer’s mask, and both compute
+the reference dispersion via base R <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>, which
+applies the Schmitz (2020) consistency constant <code>1.4826</code> by
+default. The 2019 L1-vs-L2 issue is not present in either
+implementation, and the 2020 “missing constant” complaint was withdrawn
+in the published erratum for exactly this reason. No further patching is
+needed on either side.</p>
 <p><strong>Why the simulator’s 50/50 ±1 sampling is correct under
 standard Brief-RC.</strong> A natural first worry on reading the
 simulator is that <code><a href="../reference/infoval.html">infoval()</a></code> draws random responses with
