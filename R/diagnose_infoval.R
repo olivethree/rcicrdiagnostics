@@ -25,13 +25,17 @@
 #'
 #' Whether per-producer z values cluster above or below the
 #' conventional 1.96 threshold is paradigm- and target-dependent.
-#' Brinkman et al. (2019) report 54-68% of 2IFC participants clearing
-#' 1.96 on perceived gender (median 3-4); Schmitz et al. (2024) report
-#' Brief-RC infoVals systematically below 1.96 across all conditions
-#' in both experiments. The reportable summary is therefore
-#' context-specific: per-producer z is useful for exclusion decisions
-#' on individual cases, while the group-mean CI's z is often the more
-#' defensible aggregate when individual-level z is noisy.
+#' Brinkman et al. (2019) report 68% (lab) and 54% (online) of 2IFC
+#' participants clearing 1.96 on perceived gender, with mean
+#' per-participant infoVal 3.9 (lab) and 2.9 (online); Schmitz et al.
+#' (2024) report Brief-RC infoVals systematically below 1.96 across
+#' all conditions in both experiments. The reportable summary is
+#' therefore context-specific: per-producer z is useful for exclusion
+#' decisions on individual cases. Neither paper computes a group-mean
+#' CI's z directly, but the mathematical extension (a group-mean CI
+#' compared against an N-producer-matched reference) is a useful
+#' aggregate when individual-level z is noisy, and `diagnose_infoval()`
+#' reports it.
 #'
 #' For `method = "2ifc"`, the function calls `rcicr` to reconstruct
 #' per-trial noise patterns from `stimuli_params` and `p` (the
@@ -610,7 +614,7 @@ interpret_infoval <- function(random_z, iv_unmasked, iv_masked,
              stats::median(iv_unmasked$infoval)
   if (med_z < 1.96) {
     out <- c(out, sprintf(
-      "Per-producer z is below threshold (median %+.2f); %d / %d individuals exceed z = 1.96. Whether this is expected depends on paradigm and target -- Brinkman (2019) reports ~54-68%% clearance on 2IFC gender, Schmitz (2024) reports all Brief-RC conditions below 1.96.",
+      "Per-producer z is below threshold (median %+.2f); %d / %d individuals exceed z = 1.96. Whether this is expected depends on paradigm and target -- Brinkman (2019) reports 68%% (lab) / 54%% (online) clearance on 2IFC gender; Schmitz (2024) reports all Brief-RC conditions below 1.96.",
       med_z, tally[["above_1.96"]], sum(tally)
     ))
   }

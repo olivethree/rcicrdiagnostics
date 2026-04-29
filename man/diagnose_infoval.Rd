@@ -107,13 +107,17 @@ bullets summarising the evidence.
 
 Whether per-producer z values cluster above or below the
 conventional 1.96 threshold is paradigm- and target-dependent.
-Brinkman et al. (2019) report 54-68\% of 2IFC participants clearing
-1.96 on perceived gender (median 3-4); Schmitz et al. (2024) report
-Brief-RC infoVals systematically below 1.96 across all conditions
-in both experiments. The reportable summary is therefore
-context-specific: per-producer z is useful for exclusion decisions
-on individual cases, while the group-mean CI's z is often the more
-defensible aggregate when individual-level z is noisy.
+Brinkman et al. (2019) report 68\% (lab) and 54\% (online) of 2IFC
+participants clearing 1.96 on perceived gender, with mean
+per-participant infoVal 3.9 (lab) and 2.9 (online); Schmitz et al.
+(2024) report Brief-RC infoVals systematically below 1.96 across
+all conditions in both experiments. The reportable summary is
+therefore context-specific: per-producer z is useful for exclusion
+decisions on individual cases. Neither paper computes a group-mean
+CI's z directly, but the mathematical extension (a group-mean CI
+compared against an N-producer-matched reference) is a useful
+aggregate when individual-level z is noisy, and \code{diagnose_infoval()}
+reports it.
 
 For \code{method = "2ifc"}, the function calls \code{rcicr} to reconstruct
 per-trial noise patterns from \code{stimuli_params} and \code{p} (the

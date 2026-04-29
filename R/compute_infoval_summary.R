@@ -8,10 +8,12 @@
 #' face-mask z-lift, interpretation bullets), see [diagnose_infoval()].
 #'
 #' Reported per-producer infoVal is paradigm- and target-dependent.
-#' Brinkman et al. (2019, p. 12) report 54-68% of 2IFC gender
-#' participants clearing z = 1.96 (median 3-4). Schmitz et al. (2024)
-#' report Brief-RC infoVals below 1.96 across all conditions in both of
-#' their experiments. The status returned here therefore does not
+#' Brinkman et al. (2019, p. 12) report 68% (lab) and 54% (online) of
+#' 2IFC gender participants clearing z = 1.96, with mean per-participant
+#' infoVal 3.9 (lab) and 2.9 (online) and most participants in the 3-4
+#' range. Schmitz et al. (2024) report Brief-RC infoVals below 1.96
+#' across all conditions in both of their experiments. The status
+#' returned here therefore does not
 #' `"fail"` on a per-participant headcount alone: it returns `"pass"`
 #' when the median per-participant z is positive and `"warn"`
 #' otherwise. Use [diagnose_infoval()] when you need a proper verdict

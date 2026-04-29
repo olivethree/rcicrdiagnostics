@@ -4,7 +4,7 @@ template:
 
 footer:
   structure:
-    left: developed_by
+    left: byline
     right: built_with
   components:
-    developed_by: "M. Oliveira, 2026"
+    byline: "Manuel Oliveira, 2026"
