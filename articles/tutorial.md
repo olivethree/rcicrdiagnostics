@@ -3,19 +3,19 @@
 ## 1. What this package is
 
 Reverse correlation (RC) experiments let you visualise a participant’s
-mental representation — for example, what their mental image of
-“trustworthy” looks like — by averaging the noise patterns the
+mental representation (for example, what their mental image of
+“trustworthy” looks like) by averaging the noise patterns the
 participant chose across many trials. The end product is a
 **classification image (CI)**, and a common summary of the CI’s quality
 is the **information value (infoVal)**: roughly, how much real signal is
-in the CI versus chance (Brinkman et al., 2017, 2019).
+in the CI versus chance (Brinkman et al., 2019).
 
 These pipelines can fail quietly. A response column coded `{0, 1}`
-instead of `{-1, 1}`, a stimulus-number column that is off by one, a
-noise-matrix file whose dimensions don’t match the response data — any
-of these produces a CI that *looks* plausible but is wrong. R doesn’t
-catch these problems and neither does the `rcicr` package, because the
-errors live in the *match* between your response data and the files that
+instead of `{-1, 1}`, a stimulus-number column that is off by one, or a
+noise-matrix file whose dimensions don’t match the response data: any of
+these produces a CI that *looks* plausible but is wrong. R doesn’t catch
+these problems and neither does the `rcicr` package, because the errors
+live in the *match* between your response data and the files that
 generated the stimuli.
 
 `rcicrdiagnostics` is a toolkit of data-quality checks you run on your
@@ -25,11 +25,11 @@ CIs knowing the basic data mechanics are in order.
 
 The package supports two pipelines through a single `method` argument:
 
-- **`"2ifc"`** — the standard two-image forced-choice pipeline, as
+- **`"2ifc"`**: the standard two-image forced-choice pipeline, as
   implemented by the [`rcicr`](https://github.com/rdotsch/rcicr) package
   (Dotsch, 2016, 2023). On each trial the participant picks one of two
   noisy faces.
-- **`"briefrc"`** — the Brief Reverse Correlation pipeline (Schmitz et
+- **`"briefrc"`**: the Brief Reverse Correlation pipeline (Schmitz et
   al., 2024). On each trial the participant picks one noisy face out of
   6, 12, or more. CIs are computed by direct noise-matrix multiplication
   rather than by reconstructing sinusoids from a generating `.RData`
@@ -48,19 +48,19 @@ R 4.1 or newer.
 
 `rcicrdiagnostics` has only two hard dependencies, both on CRAN:
 
-- [`data.table`](https://rdatatable.gitlab.io/data.table/) — a fast
+- [`data.table`](https://rdatatable.gitlab.io/data.table/): a fast
   alternative to base R’s `data.frame`, used internally for counting and
   grouping. You don’t need to learn its syntax to use this package.
-- [`cli`](https://cli.r-lib.org/) — used to format console messages with
+- [`cli`](https://cli.r-lib.org/): used to format console messages with
   colour.
 
 ### Optional packages (needed only for the 2IFC infoVal-based checks)
 
 Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal) delegate
 the 2IFC path to the original `rcicr` package (Dotsch, 2016, 2023).
-**They return a `"skip"` result for Brief-RC** — see Section 6.9 for
-why. If you want the 2IFC infoVal checks, install `rcicr`. From Dotsch’s
-own install instructions:
+**They return a `"skip"` result for Brief-RC** (see Section 6.9 for
+why). If you want the 2IFC infoVal checks, install `rcicr`. From
+Dotsch’s own install instructions:
 
 ``` r
 # Latest stable version (from CRAN if still hosted):
@@ -75,7 +75,7 @@ At the time of writing, the original `rcicr` is version 1.0.1 (2023),
 maintained by Ron Dotsch on
 [github.com/rdotsch/rcicr](https://github.com/rdotsch/rcicr).
 
-- `foreach`, `tibble`, and `dplyr` — `rcicr` uses operators and helpers
+- `foreach`, `tibble`, and `dplyr`: `rcicr` uses operators and helpers
   from these packages at runtime (`%dopar%`, `tribble`, `%>%`). The
   package will attach them for you on the first infoVal-dependent call,
   but they need to be installed:
@@ -118,13 +118,11 @@ will tell you, but only after you have already collected the data.
 
 ### 3.1. Response data (both pipelines)
 
-The package expects a trial-level data object (one row per trial). It
-can be a `data.frame`, a `data.table`, a `tibble`, or any object that
-behaves like a data frame in R. The original source can be a CSV, an
-RData file, a Parquet file, a database query, or constructed
-programmatically. Whatever the source, by the time it reaches the
-diagnostic functions it is a tabular object with the columns described
-below.
+The package expects a trial-level data object (one row per trial) as a
+`data.frame`, `data.table`, `tibble`, or any data-frame-like object. The
+original source (CSV, RData, Parquet, database query, programmatic
+construction) does not matter; by the time it reaches the diagnostic
+functions it must be a tabular object with the columns below.
 
 | Column           | Purpose                                                                                                                                                                                                                                               |
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -245,11 +243,10 @@ chosen stimuli only:
     mask = (noise_matrix[, chosen_stimuli] %*% chosen_responses) /
              number_of_unique_chosen_stimuli
 
-The unselected faces contribute nothing to the mask because their noise
-patterns never enter the matrix multiplication. They are implicitly
-weighted at zero, but no zero row is needed in the data: their absence
-is the zero. Recording them as rows with `response = 0` would inflate
-the divisor and shrink the resulting mask.
+The unselected faces contribute nothing because their noise patterns
+never enter the matrix multiplication; their absence is the zero.
+Recording them as rows with `response = 0` would inflate the divisor and
+shrink the resulting mask.
 
 A common pitfall is the “expanded” format with 12 rows per trial,
 weighting the chosen face `+1` and the unchosen `−1/11`. Do not use that
@@ -299,8 +296,10 @@ al.’s `genMask()` formulation does. So:
 - The `genMask()` divisor is then `length(unique(chosen_stimuli))`, not
   `n_trials`.
 
-**Downstream effects of the sampling regime.** The two practical
-consequences for analysis are:
+**Downstream effects of the sampling regime.** The sampling regime
+shapes how the random-responder reference distribution behind infoVal
+must be simulated (§6.9 introduces infoVal and the reference
+distribution; here we record only the implication for sampling):
 
 | Sampling regime                   | Producer’s data                          | `length(unique(chosen_stimuli))` vs. `n_trials` | InfoVal reference distribution                                       |
 |-----------------------------------|------------------------------------------|-------------------------------------------------|----------------------------------------------------------------------|
@@ -511,13 +510,13 @@ plot_face_mask("masks/oval_mask.png",
 If the base image’s dimensions do not match the mask’s, the overlay
 falls back to a grey background and emits a warning rather than silently
 misaligning. Mismatches usually mean the mask was generated for a
-differently sized image — regenerate at the correct dimensions before
-continuing.
+differently sized image (regenerate at the correct dimensions before
+continuing).
 
 ## 4. A first diagnostic run
 
-Here is a small synthetic 2IFC dataset — three participants, one hundred
-trials each, responses drawn uniformly from `{-1, 1}`:
+Here is a small synthetic 2IFC dataset (three participants, one hundred
+trials each, responses drawn uniformly from `{-1, 1}`):
 
 ``` r
 responses <- data.frame(
@@ -584,16 +583,16 @@ exact input that’s missing. So when you see
       - check_response_inversion (needs infoval)
       - cross_validate_rt_infoval (needs infoval)
 
-nothing has failed — you just haven’t handed
+nothing has failed; you just haven’t handed
 [`run_diagnostics()`](https://olivethree.github.io/rcicrdiagnostics/reference/run_diagnostics.md)
 the extra inputs those checks need. Section 7.1 walks through exactly
 what to pass for each one so you can progressively unlock them.
 
 ## 5. Result object
 
-Every single check returns a small list with a fixed shape. The package
-gives this shape a class name — `rcdiag_result` — so that printing and
-other helpers know how to handle it:
+Every check returns a small list with a fixed shape. The package gives
+this shape a class name (`rcdiag_result`) so that printing and other
+helpers know how to handle it:
 
 ``` r
 r <- check_response_coding(responses, method = "2ifc")
@@ -608,19 +607,18 @@ str(r, max.level = 1)
 
 Four fields you can read directly:
 
-- `status` — one of `"pass"`, `"warn"`, `"fail"`, `"skip"`. Interpret
-  as: move on, investigate, stop and fix, not run.
-- `label` — short description of the check.
-- `detail` — the lines printed under the status tag.
-- `data` — optional supporting data: flagged participants, count tables,
-  group statistics. Useful when you want to programmatically exclude
-  problem participants from the dataset you eventually feed to the CI
-  generator.
+- `status`: one of `"pass"`, `"warn"`, `"fail"`, `"skip"`. Interpret as
+  move on, investigate, stop and fix, not run.
+- `label`: short description of the check.
+- `detail`: the lines printed under the status tag.
+- `data`: optional supporting data (flagged participants, count tables,
+  group statistics). Useful for programmatically excluding problem
+  participants from the dataset you eventually feed to the CI generator.
 
 [`run_diagnostics()`](https://olivethree.github.io/rcicrdiagnostics/reference/run_diagnostics.md)
 returns a collection of these, wrapped in an `rcdiag_report`.
 [`summary()`](https://rdrr.io/r/base/summary.html) flattens the
-collection into a tidy data frame — handy if you want to filter or log
+collection into a tidy data frame, handy for filtering or logging
 statuses:
 
 ``` r
@@ -716,9 +714,9 @@ Duplicate rows almost always indicate a merge bug (for example, two
 partial exports of the same participant concatenated together). Two
 cases are flagged separately:
 
-1.  **Fully duplicated rows** — every column identical. Unambiguously
+1.  **Fully duplicated rows**: every column identical. Unambiguously
     bad.
-2.  **`(participant, stimulus)` pair duplicates** — same participant,
+2.  **`(participant, stimulus)` pair duplicates**: same participant,
     same stimulus, but different response or RT. Could be legitimate if
     your design deliberately repeats stimuli, or could be a merge error.
 
@@ -738,11 +736,11 @@ check_duplicates(with_a_dup)
 
 Two kinds of bias are reported:
 
-- **Constant responders** — a participant who gave the same response on
+- **Constant responders**: a participant who gave the same response on
   every trial. These are almost always bad data (disengaged participant
   or a coding bug) because their “signal” contribution is constant and
   does nothing except scale the base image. Status: **fail**.
-- **Extremely biased participants** — those whose mean response is far
+- **Extremely biased participants**: those whose mean response is far
   enough from zero that you probably can’t trust the CI. The threshold
   is `|mean| > bias_threshold`, default `0.6`. For binary `{-1, 1}`
   coding this corresponds to roughly an 80/20 split. Status: **warn**.
@@ -805,7 +803,7 @@ df_rt <- data.frame(
   rt             = c(
     exp(rnorm(100, 6.7, 0.4)) + 200,   # normal responder
     c(rep(150, 30), exp(rnorm(70, 6.7, 0.4)) + 200),  # 30% fast
-    rep(800, 100)                      # constant RT — no variability
+    rep(800, 100)                      # constant RT (no variability)
   )
 )
 check_rt(df_rt, col_rt = "rt")
@@ -852,16 +850,16 @@ check_stimulus_alignment(stim_bad, method = "briefrc", noise_matrix = mat)
 ```
 
 Any id outside `[1, pool_size]` returns **fail**. If more than half the
-pool is never referenced in the data, you get a **warn** — that’s often
-a sign the stimulus file doesn’t match the experiment you ran.
+pool is never referenced in the data, you get a **warn** (often a sign
+the stimulus file doesn’t match the experiment you ran).
 
 ### 6.7. `check_version_compat()`
 
 Every `.RData` produced by
 [`rcicr::generateStimuli2IFC()`](https://rdrr.io/pkg/rcicr/man/generateStimuli2IFC.html)
 stores a `generator_version` field. When you reconstruct CIs later, the
-installed `rcicr` version should match — subtle API or numerical changes
-between versions can silently produce different CIs from the same data.
+installed `rcicr` version should match (subtle API or numerical changes
+between versions can silently produce different CIs from the same data).
 
 ``` r
 tmp <- tempfile(fileext = ".RData")
@@ -897,8 +895,8 @@ validate_noise_matrix(mat, expected_pixels = 16384, expected_stimuli = 5)
 The validator checks the dimensions (one row per pixel, one column per
 stimulus) and that no cell is `NA`, `NaN`, or `Inf`. Supplying the wrong
 expected dimensions returns **fail** with a specific message. A lot of
-early-pipeline errors surface here — confusing pixel count with stimulus
-count, saving the matrix with an unexpected delimiter, and so on.
+early-pipeline errors surface here (confusing pixel count with stimulus
+count, saving the matrix with an unexpected delimiter, and so on).
 
 ### 6.9. `compute_infoval_summary()`
 
@@ -912,7 +910,7 @@ The 2IFC path delegates the heavy lifting to the original `rcicr`
 package (Dotsch, v1.0.1 at the time of writing): `batchGenerateCI2IFC()`
 to build per-participant CIs and `computeInfoVal2IFC()` to score each
 against a simulated reference distribution. On the first call `rcicr`
-simulates a reference distribution (10 000 iterations by default — a few
+simulates a reference distribution (10 000 iterations by default, a few
 minutes) and caches it *inside the `.RData` file* so subsequent calls
 are fast. **Copy your `.RData` beforehand if you want the original
 untouched.**
@@ -940,7 +938,7 @@ iv <- compute_infoval_summary(
   threshold = 1.96
 )
 iv
-# $data$per_participant has: participant_id, infoval, meaningful
+# $data$per_participant has: participant_id, infoval, above_threshold
 head(iv$data$per_participant)
 ```
 
@@ -954,35 +952,36 @@ Use `$data$per_participant` to pull out individual scores and the
 
 [`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)
 deliberately does **not** return a **fail** status based on
-per-participant z alone. The reason is the subject of §6.9.1 below:
-per-producer z is structurally low even on healthy data, so a
-per-participant headcount is a misleading proxy for data quality. Use
+per-participant z alone. As §6.9.1 explains, per-producer z is
+structurally low even on healthy data, so a per-participant headcount
+misclassifies many compliant studies. Use
 [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
-(§6.9.2) for the real verdict.
+(§6.9.2) for the full verdict.
 
 ### 6.9.1. Why per-producer infoVal often looks “low”
 
 A common moment of confusion in RC analysis is opening
 [`compute_infoval_summary()`](https://olivethree.github.io/rcicrdiagnostics/reference/compute_infoval_summary.md)’s
 output and seeing per-producer z below the 1.96 threshold, sometimes
-negative, even though data collection went smoothly. Three things are
-worth knowing before you conclude the data are broken.
+negative, even though data collection went smoothly. A few facts about
+infoVal are worth knowing before concluding the data are broken.
 
 **The published baseline is paradigm- and target-dependent.** Brinkman
-et al. (2019, p. 12) report that on 2IFC for perceived gender — a
-strong, consensual target — individual infoVals cluster in the 3–4
-range, with 54–68% of participants clearing 1.96 (lab vs. online samples
-respectively). By contrast, Schmitz et al. (2024) applied infoVal to
-Brief-RC for a social-category target (“Chinese-looking face”), with an
-oval face mask, and reported infoVals **below 1.96 in every condition of
-both experiments**: Experiment 1 means were 1.54 (Traditional-RC), 1.93
-(Brief-RC12), and 1.74 (Brief-RC20) (p. 7); Experiment 2 means across
-comparison criteria ranged from 0.69 to 1.22. Their own interpretation
-(p. 13): *“infoVal scores were relatively low, regardless of the
-condition, signalling that increasing the number of trials may be
-beneficial to improve both metrics.”* So “low individual infoVal” is the
-normal empirical finding for Brief-RC in the only published
-methodological evaluation of it.
+et al. (2019) studied 2IFC for perceived gender (a strong, consensual
+target). Mean per-participant infoVal was 3.9 ± 0.4 (lab sample) and 2.9
+± 0.32 (online sample), and most participants fell in the 3–4 range; the
+proportion clearing z = 1.96 was 68% (lab) and 54% (online) (p. 12, Part
+III Discussion; General Discussion). Schmitz et al. (2024) applied
+infoVal to Brief-RC for a social-category target (“Chinese-looking
+face”), with an oval face mask, and reported infoVals **below 1.96 in
+every condition of both experiments**: Experiment 1 means were 1.54
+(Traditional-RC), 1.93 (Brief-RC12), and 1.74 (Brief-RC20) (p. 7);
+Experiment 2 means across comparison criteria ranged from 0.69 to 1.22.
+Their own interpretation (p. 13): *“infoVal scores were relatively low,
+regardless of the condition, signalling that increasing the number of
+trials may be beneficial to improve both metrics.”* So “low individual
+infoVal” is the normal empirical finding for Brief-RC in the only
+published methodological evaluation of it.
 
 **There is a known calibration bug for Brief-RC in the original rcicr.**
 [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
@@ -1010,58 +1009,56 @@ are mathematically equivalent: their reference distributions differ only
 by a column permutation of the noise matrix, and the Frobenius norm is
 permutation-invariant. Under a matched RNG seed they agree to
 floating-point tolerance. Switching from `rcicr` to this package on a
-standard 2IFC analysis will not change your published numbers — the
-in-package
+standard 2IFC analysis does not change your numbers; the in-package
 [`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
 only departs from `rcicr` when `n_trials != n_pool` (the Brief-RC
 calibration gap above) or when a `mask` is supplied.
 
-**Schmitz (2019) L1-vs-L2 and Schmitz (2020) MAD-constant critiques do
-not apply.** Both
-[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html)
-and
-[`rcicrdiagnostics::infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
-compute the Frobenius (L2) norm `sqrt(sum(x * x))` on the producer’s
-mask, and both compute the reference dispersion via base R
+**Norm and dispersion conventions.**
+[`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
+computes the Frobenius (L2) norm `sqrt(sum(x * x))` on the producer’s
+mask and the reference dispersion via base R
 [`stats::mad()`](https://rdrr.io/r/stats/mad.html), which applies the
-Schmitz (2020) consistency constant `1.4826` by default. The 2019
-L1-vs-L2 issue is not present in either implementation, and the 2020
-“missing constant” complaint was withdrawn in the published erratum for
-exactly this reason. No further patching is needed on either side.
+consistency constant `1.4826` by default. These choices match
+[`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html).
 
 **Why the simulator’s 50/50 ±1 sampling is correct under standard
-Brief-RC.** A natural first worry on reading the simulator is that
+Brief-RC.** Reading the simulator may raise a worry:
 [`infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/infoval.md)
 draws random responses with `sample(c(-1, 1), n_trials, replace = TRUE)`
-— a uniform 50/50 ±1 — when each Brief-RC trial actually involves
-picking 1 of 12 alternatives. The 50/50 is exact under the standard
-Brief-RC trial structure (Schmitz et al., 2024, p. 6): each trial shows
-6 oriented and 6 inverted faces, so a random producer picks one of 12
-with `P(response = +1) = 6/12 = 0.5`, and the chosen-stimulus-id
-sequence is uniform over the pool. The simulator’s marginal joint
-distribution of `(chosen_stim, response)` therefore matches a random
-Brief-RC responder. Designs that depart from a balanced
-oriented/inverted split per trial, or that have trials overlapping on
-the pool in non-standard ways, will see a small calibration drift; for
-the standard 6/6 design — and correspondingly for any other balanced
-split such as 10/10 in Brief-RC 20 — the calibration is exact.
+(a uniform 50/50 ±1) even though each Brief-RC trial involves picking 1
+of 12 alternatives. The 50/50 is exact under the standard Brief-RC trial
+structure (Schmitz et al., 2024, p. 6): each trial shows 6 oriented and
+6 inverted faces, so a random producer picks one of 12 with
+`P(response = +1) = 6/12 = 0.5`, and the chosen-stimulus-id sequence is
+uniform over the pool. The simulator’s marginal joint distribution of
+`(chosen_stim, response)` therefore matches a random Brief-RC responder.
+Designs that depart from a balanced oriented/inverted split per trial,
+or that have trials overlapping on the pool in non-standard ways, will
+see a small calibration drift; for the standard 6/6 design (and
+correspondingly for any other balanced split, such as 10/10 in Brief-RC
+20) the calibration is exact.
 
-**Group-mean vs. individual z.** The group-mean CI is built from N × T
-decisions across N producers, so its Frobenius norm is compared against
-a correspondingly tighter reference distribution; intuitively, noise
-averages down by √N. The Brinkman and Schmitz papers don’t compute a
-group-mean z directly, but mathematically it will exceed the
-individual-level median, and it is often the more defensible summary
-statistic when individual-level z is noisy.
+**Group-mean vs. individual z.** Neither Brinkman nor Schmitz compute a
+group-mean infoVal z directly; both papers apply infoVal at the
+individual level (Brinkman recommends it as an exclusion criterion or as
+a way to assess how individual CIs weight into a group CI). The
+mathematical extension is straightforward, however: a group-mean CI
+built from N × T decisions across N producers has its Frobenius norm
+compared against a correspondingly tighter reference distribution
+(intuitively, noise averages down by √N), so the group-mean z exceeds
+the individual-level median by construction. We treat that group-mean z
+as a useful aggregate when individual-level z is noisy, but flag it as
+our derivation rather than an established Brinkman result.
 
-One additional interpretation, offered as *speculation*, not as an
+One additional interpretation, offered as *speculation* rather than
 established finding: negative individual z does not imply “anti-signal.”
 InfoVal is direction-agnostic (a z-scored Frobenius norm has no sign in
 pixel space), so a producer responding “opposite” to the target would
 still score positive. Negative z is geometrically consistent with a
 coherent low-rank mask that fills less of the noise basis than a
-random-responder mask does — but neither Brinkman nor Schmitz report or
-test this, so treat it as a hypothesis, not a fact.
+random-responder mask does, but neither Brinkman nor Schmitz test this,
+so treat it as a hypothesis.
 
 What
 [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
@@ -1078,10 +1075,10 @@ automates:
 
 What it does **not** automate is the decision about whether your
 individual-level infoVals are high enough to report. That depends on
-your target, paradigm, and trial count, and the published baselines from
-the two papers cited above are the honest yardsticks.
+target, paradigm, and trial count, and the published baselines above are
+the honest yardsticks.
 
-### 6.9.2. `diagnose_infoval()` — guided low/negative-z diagnostic
+### 6.9.2. `diagnose_infoval()`: guided low/negative-z diagnostic
 
 [`diagnose_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/diagnose_infoval.md)
 is the recommended entry point when individual infoVal looks low and you
@@ -1156,13 +1153,13 @@ sentence that does not describe what you actually did.
 ### 6.10. `check_response_inversion()`
 
 Occasionally a whole batch of response data has its `+1`/`-1` codes
-systematically flipped — for example, the export script recorded *button
-number* rather than *chosen face side*, and the mapping was reversed. An
+systematically flipped (for example, the export script recorded *button
+number* rather than *chosen face side*, with the mapping reversed). An
 inverted CI looks perfectly reasonable but represents the opposite
 mental content from what you meant to measure.
 
-This check computes infoVal twice — once with the original responses and
-once with every response sign-flipped — and flags participants whose
+This check computes infoVal twice (once with the original responses and
+once with every response sign-flipped) and flags participants whose
 flipped infoVal exceeds the original by at least `margin` (default
 `1.96`). Any non-zero count is a strong signal.
 
@@ -1194,8 +1191,8 @@ suspicious:
     informative.
 2.  **A negative correlation** between infoVal and RT *across*
     participants. If fast responders systematically score higher on
-    infoVal, something about the measurement is off — possibly a
-    click-pattern artefact.
+    infoVal, something about the measurement is off (possibly a
+    click-pattern artefact).
 
 ``` r
 cross_validate_rt_infoval(
@@ -1228,7 +1225,7 @@ responses <- load_responses("my_data.csv", method = "2ifc")
 ```
 
 It returns a `data.table`, which behaves like a regular `data.frame` for
-the check functions — you don’t need to learn a new syntax.
+the check functions (no new syntax to learn).
 
 ## 7. `run_diagnostics()`
 
@@ -1246,8 +1243,8 @@ run_diagnostics(responses, rdata = "stimuli.RData")
 run_diagnostics(responses, noise_matrix = "noise_matrix_128.txt")
 ```
 
-Pass `method` explicitly when you have neither file on hand — for
-example, to sanity-check the response CSV by itself:
+Pass `method` explicitly when you have neither file on hand (for
+example, to sanity-check the response CSV by itself):
 
 ``` r
 run_diagnostics(responses, method = "2ifc")
@@ -1288,8 +1285,8 @@ Per-check options are passed through. Common ones:
   [`cross_validate_rt_infoval()`](https://olivethree.github.io/rcicrdiagnostics/reference/cross_validate_rt_infoval.md).
 - `infoval_iter` → number of iterations for the reference-distribution
   simulation. **Default `NULL`**, which means the three infoVal-based
-  checks are skipped. Set to e.g. `10000` to enable them — expect the
-  first call to take a few minutes.
+  checks are skipped. Set to e.g. `10000` to enable them (expect the
+  first call to take a few minutes).
 
 ``` r
 run_diagnostics(
@@ -1390,13 +1387,13 @@ nothing runs halfway.
 
 Four statuses:
 
-- **pass** (green) — the check saw nothing unusual. Continue.
-- **warn** (yellow) — something worth investigating but not necessarily
+- **pass** (green): the check saw nothing unusual. Continue.
+- **warn** (yellow): something worth investigating but not necessarily
   fatal (e.g. one duplicate row, a known miscoding with a suggested
   fix). Look at `$data` and decide.
-- **fail** (red) — something that will corrupt downstream CIs or infoVal
+- **fail** (red): something that will corrupt downstream CIs or infoVal
   if you ignore it. Fix before proceeding.
-- **skip** (grey) — the check didn’t run because its required inputs
+- **skip** (grey): the check didn’t run because its required inputs
   weren’t supplied. For example,
   [`check_rt()`](https://olivethree.github.io/rcicrdiagnostics/reference/check_rt.md)
   is skipped when `col_rt` is `NULL`, and the infoVal-based checks are
@@ -1415,8 +1412,8 @@ A practical workflow:
 4.  Once the basic checks pass, rerun with `rdata = ...`,
     `col_rt = "rt"`, and `infoval_iter = 10000` to unlock the infoVal-
     dependent checks.
-5.  Only when every check is **pass** — or a consciously accepted
-    **warn** — move on to
+5.  Only when every check is **pass** (or a consciously accepted
+    **warn**), move on to
     [`rcicr::generateCI2IFC()`](https://rdrr.io/pkg/rcicr/man/generateCI2IFC.html)
     (2IFC) or your Brief-RC CI code.
 
@@ -1435,8 +1432,8 @@ When
 [`rcicr::batchGenerateCI2IFC()`](https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html)
 (or `generateCI2IFC()`) computes a CI, the underlying math produces a
 two-dimensional pixel array whose values are typically centered near
-zero and span a small range — often between roughly $- 0.01$ and
-$+ 0.01$, depending on signal strength and number of trials. These
+zero and span a small range (often between roughly $- 0.01$ and
+$+ 0.01$, depending on signal strength and number of trials). These
 numbers are the real signal: they encode how much each pixel contributes
 to the participant’s mental image.
 
@@ -1448,9 +1445,9 @@ display meaning, and the absolute values would be too small to see.
 range suitable for rendering. Every CI that `rcicr` returns therefore
 contains two parallel fields:
 
-- **`ci$ci`** — the *raw* CI, exactly as produced by the weighted sum of
+- **`ci$ci`**: the *raw* CI, exactly as produced by the weighted sum of
   noise patterns. This is your data.
-- **`ci$scaled`** — the *rescaled* CI, produced by applying one of the
+- **`ci$scaled`**: the *rescaled* CI, produced by applying one of the
   transformations below. This is what gets saved as a PNG or combined
   with the base image for display.
 
@@ -1466,7 +1463,7 @@ distinction matters for every numerical analysis you perform on a CI.
 | `constant`    | $(CI + c)/(2c)$ with $c$ fixed (default $c = 0.1$). The same $c$ gives identical mapping across CIs.                                  | Visual comparability across CIs when you want to preserve relative intensity and have within-study control over the display scale. |
 | `independent` | Same formula, but $c = \max|CI|$ computed separately for each CI. Each CI is stretched to $\lbrack 0,1\rbrack$ using its own range.   | Maximum visual contrast for a single CI viewed alone. *Not* for comparisons across CIs.                                            |
 | `matched`     | Linearly remaps the CI to match the base image’s pixel range.                                                                         | Overlaying the CI on the base image for visual presentation; rating-task stimuli that should blend with the base face.             |
-| `autoscale`   | Batch-level variant of `independent`: computes one shared constant from the widest-range CI across all CIs produced in the same call. | Sets of CIs that will be viewed side by side — for example, group-level CIs per condition.                                         |
+| `autoscale`   | Batch-level variant of `independent`: computes one shared constant from the widest-range CI across all CIs produced in the same call. | Sets of CIs that will be viewed side by side (for example, group-level CIs per condition).                                         |
 
 The defaults differ by function: `batchGenerateCI2IFC()` uses
 `"autoscale"` by default; `generateCI2IFC()` uses `"independent"`. That
@@ -1485,7 +1482,7 @@ The table below expands this into typical use cases.
 |----------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Computing infoVal**                                                                                    | Any scaling                                                                                        | [`rcicr::computeInfoVal2IFC()`](https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html) operates on `ci$ci` internally. The `scaling` argument has no effect on the returned *z*-score.                     |
 | **Pixel-wise correlations between CIs** (similarity)                                                     | Use `ci$ci`                                                                                        | Pearson correlation is preserved only under *uniform* linear rescalings. `independent` and `matched` apply CI-specific rescalings, which distort correlations.                                             |
-| **Euclidean distance between CIs** (e.g., the objective discriminability ratio in Brinkman et al., 2019) | Use `ci$ci`                                                                                        | Same reasoning — CI-dependent rescalings change distances non-uniformly.                                                                                                                                   |
+| **Euclidean distance between CIs** (e.g., the objective discriminability ratio in Brinkman et al., 2019) | Use `ci$ci`                                                                                        | Same reasoning (CI-dependent rescalings change distances non-uniformly).                                                                                                                                   |
 | **Producing CIs for a trait-ratings task**                                                               | `autoscale` (group of CIs viewed together) or `constant` with fixed $c$ (across-study consistency) | Raters should perceive genuine signal differences across CIs. `independent` defeats this because every CI is stretched to the same display range; a weak-signal CI looks as intense as a strong-signal CI. |
 | **Saving PNG figures for a paper**                                                                       | `matched` for base-image overlays; `autoscale` for grids of CIs                                    | Pick one and document it. Using different options across figures in the same paper makes them visually incomparable even when the underlying data are the same.                                            |
 | **Pixel / cluster statistical tests** (Chauvin et al., 2005)                                             | [`rcicr::plotZmap()`](https://rdrr.io/pkg/rcicr/man/plotZmap.html) (handles the raw CI internally) | Do not hand-construct a *z*-map from `ci$scaled`.                                                                                                                                                          |
@@ -1514,8 +1511,8 @@ The table below expands this into typical use cases.
 
 - **Believing that scaling affects infoVal.** It does not.
   `computeInfoVal2IFC()` always reads the raw CI. If two analyses give
-  different infoVal values, the cause is elsewhere — in the response
-  data, in the reference-distribution cache, or in the trial count — not
+  different infoVal values, the cause is elsewhere (in the response
+  data, in the reference-distribution cache, or in the trial count), not
   in scaling. See Section 6.9 for the details.
 
 - **Applying [`norm()`](https://rdrr.io/r/base/norm.html) or

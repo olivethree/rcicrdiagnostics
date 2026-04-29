@@ -69,17 +69,17 @@
 <h2 id="what-this-package-is">1. What this package is<a class="anchor" aria-label="anchor" href="#what-this-package-is"></a>
 </h2>
 <p>Reverse correlation (RC) experiments let you visualise a
-participant’s mental representation — for example, what their mental
-image of “trustworthy” looks like — by averaging the noise patterns the
+participant’s mental representation (for example, what their mental
+image of “trustworthy” looks like) by averaging the noise patterns the
 participant chose across many trials. The end product is a
 <strong>classification image (CI)</strong>, and a common summary of the
 CI’s quality is the <strong>information value (infoVal)</strong>:
 roughly, how much real signal is in the CI versus chance (Brinkman et
-al., 2017, 2019).</p>
+al., 2019).</p>
 <p>These pipelines can fail quietly. A response column coded
 <code>{0, 1}</code> instead of <code>{-1, 1}</code>, a stimulus-number
-column that is off by one, a noise-matrix file whose dimensions don’t
-match the response data — any of these produces a CI that <em>looks</em>
+column that is off by one, or a noise-matrix file whose dimensions don’t
+match the response data: any of these produces a CI that <em>looks</em>
 plausible but is wrong. R doesn’t catch these problems and neither does
 the <code>rcicr</code> package, because the errors live in the
 <em>match</em> between your response data and the files that generated
@@ -93,12 +93,12 @@ order.</p>
 <code>method</code> argument:</p>
 <ul>
 <li>
-<strong><code>"2ifc"</code></strong> — the standard two-image
+<strong><code>"2ifc"</code></strong>: the standard two-image
 forced-choice pipeline, as implemented by the <a href="https://github.com/rdotsch/rcicr" class="external-link"><code>rcicr</code></a> package
 (Dotsch, 2016, 2023). On each trial the participant picks one of two
 noisy faces.</li>
 <li>
-<strong><code>"briefrc"</code></strong> — the Brief Reverse
+<strong><code>"briefrc"</code></strong>: the Brief Reverse
 Correlation pipeline (Schmitz et al., 2024). On each trial the
 participant picks one noisy face out of 6, 12, or more. CIs are computed
 by direct noise-matrix multiplication rather than by reconstructing
@@ -123,12 +123,12 @@ checks use the right logic automatically once you set
 CRAN:</p>
 <ul>
 <li>
-<a href="https://rdatatable.gitlab.io/data.table/" class="external-link"><code>data.table</code></a>
-— a fast alternative to base R’s <code>data.frame</code>, used
-internally for counting and grouping. You don’t need to learn its syntax
-to use this package.</li>
+<a href="https://rdatatable.gitlab.io/data.table/" class="external-link"><code>data.table</code></a>:
+a fast alternative to base R’s <code>data.frame</code>, used internally
+for counting and grouping. You don’t need to learn its syntax to use
+this package.</li>
 <li>
-<a href="https://cli.r-lib.org/" class="external-link"><code>cli</code></a> — used to
+<a href="https://cli.r-lib.org/" class="external-link"><code>cli</code></a>: used to
 format console messages with colour.</li>
 </ul>
 </div>
@@ -139,7 +139,7 @@ checks)<a class="anchor" aria-label="anchor" href="#optional-packages-needed-onl
 <p>Sections 6.9–6.11 (infoVal, inversion detection, RT × infoVal)
 delegate the 2IFC path to the original <code>rcicr</code> package
 (Dotsch, 2016, 2023). <strong>They return a <code>"skip"</code> result
-for Brief-RC</strong> — see Section 6.9 for why. If you want the 2IFC
+for Brief-RC</strong> (see Section 6.9 for why). If you want the 2IFC
 infoVal checks, install <code>rcicr</code>. From Dotsch’s own install
 instructions:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -153,9 +153,9 @@ instructions:</p>
 1.0.1 (2023), maintained by Ron Dotsch on <a href="https://github.com/rdotsch/rcicr" class="external-link">github.com/rdotsch/rcicr</a>.</p>
 <ul>
 <li>
-<p><code>foreach</code>, <code>tibble</code>, and <code>dplyr</code>
-— <code>rcicr</code> uses operators and helpers from these packages at
-runtime (<code>%dopar%</code>, <code>tribble</code>,
+<p><code>foreach</code>, <code>tibble</code>, and
+<code>dplyr</code>: <code>rcicr</code> uses operators and helpers from
+these packages at runtime (<code>%dopar%</code>, <code>tribble</code>,
 <code>%&gt;%</code>). The package will attach them for you on the first
 infoVal-dependent call, but they need to be installed:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -194,13 +194,12 @@ data.</p>
 <div class="section level3">
 <h3 id="response-data-both-pipelines">3.1. Response data (both pipelines)<a class="anchor" aria-label="anchor" href="#response-data-both-pipelines"></a>
 </h3>
-<p>The package expects a trial-level data object (one row per trial). It
-can be a <code>data.frame</code>, a <code>data.table</code>, a
-<code>tibble</code>, or any object that behaves like a data frame in R.
-The original source can be a CSV, an RData file, a Parquet file, a
-database query, or constructed programmatically. Whatever the source, by
-the time it reaches the diagnostic functions it is a tabular object with
-the columns described below.</p>
+<p>The package expects a trial-level data object (one row per trial) as
+a <code>data.frame</code>, <code>data.table</code>, <code>tibble</code>,
+or any data-frame-like object. The original source (CSV, RData, Parquet,
+database query, programmatic construction) does not matter; by the time
+it reaches the diagnostic functions it must be a tabular object with the
+columns below.</p>
 <table class="table">
 <colgroup>
 <col width="14%">
@@ -381,12 +380,10 @@ package expects. Mathematically, the per-producer mask is built from the
 chosen stimuli only:</p>
 <pre><code><span><span class="va">mask</span> <span class="op">=</span> <span class="op">(</span><span class="va">noise_matrix</span><span class="op">[</span>, <span class="va">chosen_stimuli</span><span class="op">]</span> <span class="op"><a href="https://rdrr.io/r/base/matmult.html" class="external-link">%*%</a></span> <span class="va">chosen_responses</span><span class="op">)</span> <span class="op">/</span></span>
 <span>         <span class="va">number_of_unique_chosen_stimuli</span></span></code></pre>
-<p>The unselected faces contribute nothing to the mask because their
-noise patterns never enter the matrix multiplication. They are
-implicitly weighted at zero, but no zero row is needed in the data:
-their absence is the zero. Recording them as rows with
-<code>response = 0</code> would inflate the divisor and shrink the
-resulting mask.</p>
+<p>The unselected faces contribute nothing because their noise patterns
+never enter the matrix multiplication; their absence is the zero.
+Recording them as rows with <code>response = 0</code> would inflate the
+divisor and shrink the resulting mask.</p>
 <p>A common pitfall is the “expanded” format with 12 rows per trial,
 weighting the chosen face <code>+1</code> and the unchosen
 <code>−1/11</code>. Do not use that format. It is not what Schmitz et
@@ -443,8 +440,11 @@ two cancel and it contributes zero.</li>
 <code>length(unique(chosen_stimuli))</code>, not
 <code>n_trials</code>.</li>
 </ul>
-<p><strong>Downstream effects of the sampling regime.</strong> The two
-practical consequences for analysis are:</p>
+<p><strong>Downstream effects of the sampling regime.</strong> The
+sampling regime shapes how the random-responder reference distribution
+behind infoVal must be simulated (§6.9 introduces infoVal and the
+reference distribution; here we record only the implication for
+sampling):</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -756,8 +756,8 @@ nose, and mouth as intended:</p>
 <p>If the base image’s dimensions do not match the mask’s, the overlay
 falls back to a grey background and emits a warning rather than silently
 misaligning. Mismatches usually mean the mask was generated for a
-differently sized image — regenerate at the correct dimensions before
-continuing.</p>
+differently sized image (regenerate at the correct dimensions before
+continuing).</p>
 </div>
 </div>
 </div>
@@ -765,9 +765,9 @@ continuing.</p>
 <div class="section level2">
 <h2 id="a-first-diagnostic-run">4. A first diagnostic run<a class="anchor" aria-label="anchor" href="#a-first-diagnostic-run"></a>
 </h2>
-<p>Here is a small synthetic 2IFC dataset — three participants, one
+<p>Here is a small synthetic 2IFC dataset (three participants, one
 hundred trials each, responses drawn uniformly from
-<code>{-1, 1}</code>:</p>
+<code>{-1, 1}</code>):</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">responses</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, each <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
@@ -827,7 +827,7 @@ you see</p>
   - compute_infoval_summary (need rdata + infoval_iter)
   - check_response_inversion (needs infoval)
   - cross_validate_rt_infoval (needs infoval)</code></pre>
-<p>nothing has failed — you just haven’t handed
+<p>nothing has failed; you just haven’t handed
 <code><a href="../reference/run_diagnostics.html">run_diagnostics()</a></code> the extra inputs those checks need.
 Section 7.1 walks through exactly what to pass for each one so you can
 progressively unlock them.</p>
@@ -835,9 +835,9 @@ progressively unlock them.</p>
 <div class="section level2">
 <h2 id="result-object">5. Result object<a class="anchor" aria-label="anchor" href="#result-object"></a>
 </h2>
-<p>Every single check returns a small list with a fixed shape. The
-package gives this shape a class name — <code>rcdiag_result</code> — so
-that printing and other helpers know how to handle it:</p>
+<p>Every check returns a small list with a fixed shape. The package
+gives this shape a class name (<code>rcdiag_result</code>) so that
+printing and other helpers know how to handle it:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">r</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_response_coding.html">check_response_coding</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">r</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -850,22 +850,22 @@ that printing and other helpers know how to handle it:</p>
 <p>Four fields you can read directly:</p>
 <ul>
 <li>
-<code>status</code> — one of <code>"pass"</code>,
+<code>status</code>: one of <code>"pass"</code>,
 <code>"warn"</code>, <code>"fail"</code>, <code>"skip"</code>. Interpret
-as: move on, investigate, stop and fix, not run.</li>
+as move on, investigate, stop and fix, not run.</li>
 <li>
-<code>label</code> — short description of the check.</li>
+<code>label</code>: short description of the check.</li>
 <li>
-<code>detail</code> — the lines printed under the status tag.</li>
+<code>detail</code>: the lines printed under the status tag.</li>
 <li>
-<code>data</code> — optional supporting data: flagged participants,
-count tables, group statistics. Useful when you want to programmatically
-exclude problem participants from the dataset you eventually feed to the
-CI generator.</li>
+<code>data</code>: optional supporting data (flagged participants,
+count tables, group statistics). Useful for programmatically excluding
+problem participants from the dataset you eventually feed to the CI
+generator.</li>
 </ul>
 <p><code><a href="../reference/run_diagnostics.html">run_diagnostics()</a></code> returns a collection of these, wrapped
 in an <code>rcdiag_report</code>. <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> flattens the
-collection into a tidy data frame — handy if you want to filter or log
+collection into a tidy data frame, handy for filtering or logging
 statuses:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span></span>
@@ -958,11 +958,11 @@ partial exports of the same participant concatenated together). Two
 cases are flagged separately:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Fully duplicated rows</strong> — every column identical.
+<strong>Fully duplicated rows</strong>: every column identical.
 Unambiguously bad.</li>
 <li>
 <strong><code>(participant, stimulus)</code> pair
-duplicates</strong> — same participant, same stimulus, but different
+duplicates</strong>: same participant, same stimulus, but different
 response or RT. Could be legitimate if your design deliberately repeats
 stimuli, or could be a merge error.</li>
 </ol>
@@ -983,13 +983,13 @@ stimuli, or could be a merge error.</li>
 <p>Two kinds of bias are reported:</p>
 <ul>
 <li>
-<strong>Constant responders</strong> — a participant who gave the
+<strong>Constant responders</strong>: a participant who gave the
 same response on every trial. These are almost always bad data
 (disengaged participant or a coding bug) because their “signal”
 contribution is constant and does nothing except scale the base image.
 Status: <strong>fail</strong>.</li>
 <li>
-<strong>Extremely biased participants</strong> — those whose mean
+<strong>Extremely biased participants</strong>: those whose mean
 response is far enough from zero that you probably can’t trust the CI.
 The threshold is <code>|mean| &gt; bias_threshold</code>, default
 <code>0.6</code>. For binary <code>{-1, 1}</code> coding this
@@ -1056,7 +1056,7 @@ otherwise <strong>pass</strong>.</p>
 <span>  rt             <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">6.7</span>, <span class="fl">0.4</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">200</span>,   <span class="co"># normal responder</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">30</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">6.7</span>, <span class="fl">0.4</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">200</span><span class="op">)</span>,  <span class="co"># 30% fast</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">800</span>, <span class="fl">100</span><span class="op">)</span>                      <span class="co"># constant RT — no variability</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">800</span>, <span class="fl">100</span><span class="op">)</span>                      <span class="co"># constant RT (no variability)</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/check_rt.html">check_rt</a></span><span class="op">(</span><span class="va">df_rt</span>, col_rt <span class="op">=</span> <span class="st">"rt"</span><span class="op">)</span></span>
@@ -1099,8 +1099,8 @@ for Brief-RC it is <code><a href="https://rdrr.io/r/base/nrow.html" class="exter
 <span><span class="co">#&gt;   Examples of out-of-range ids: 10, 42</span></span></code></pre></div>
 <p>Any id outside <code>[1, pool_size]</code> returns
 <strong>fail</strong>. If more than half the pool is never referenced in
-the data, you get a <strong>warn</strong> — that’s often a sign the
-stimulus file doesn’t match the experiment you ran.</p>
+the data, you get a <strong>warn</strong> (often a sign the stimulus
+file doesn’t match the experiment you ran).</p>
 </div>
 <div class="section level3">
 <h3 id="check_version_compat">6.7. <code>check_version_compat()</code><a class="anchor" aria-label="anchor" href="#check_version_compat"></a>
@@ -1108,9 +1108,9 @@ stimulus file doesn’t match the experiment you ran.</p>
 <p>Every <code>.RData</code> produced by
 <code><a href="https://rdrr.io/pkg/rcicr/man/generateStimuli2IFC.html" class="external-link">rcicr::generateStimuli2IFC()</a></code> stores a
 <code>generator_version</code> field. When you reconstruct CIs later,
-the installed <code>rcicr</code> version should match — subtle API or
+the installed <code>rcicr</code> version should match (subtle API or
 numerical changes between versions can silently produce different CIs
-from the same data.</p>
+from the same data).</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".RData"</span><span class="op">)</span></span>
 <span><span class="va">generator_version</span> <span class="op">&lt;-</span> <span class="st">"0.4.0"</span></span>
@@ -1143,8 +1143,8 @@ memory and validate it:</p>
 per stimulus) and that no cell is <code>NA</code>, <code>NaN</code>, or
 <code>Inf</code>. Supplying the wrong expected dimensions returns
 <strong>fail</strong> with a specific message. A lot of early-pipeline
-errors surface here — confusing pixel count with stimulus count, saving
-the matrix with an unexpected delimiter, and so on.</p>
+errors surface here (confusing pixel count with stimulus count, saving
+the matrix with an unexpected delimiter, and so on).</p>
 </div>
 <div class="section level3">
 <h3 id="compute_infoval_summary">6.9. <code>compute_infoval_summary()</code><a class="anchor" aria-label="anchor" href="#compute_infoval_summary"></a>
@@ -1160,8 +1160,8 @@ signal.</p>
 <code>batchGenerateCI2IFC()</code> to build per-participant CIs and
 <code>computeInfoVal2IFC()</code> to score each against a simulated
 reference distribution. On the first call <code>rcicr</code> simulates a
-reference distribution (10 000 iterations by default — a few minutes)
-and caches it <em>inside the <code>.RData</code> file</em> so subsequent
+reference distribution (10 000 iterations by default, a few minutes) and
+caches it <em>inside the <code>.RData</code> file</em> so subsequent
 calls are fast. <strong>Copy your <code>.RData</code> beforehand if you
 want the original untouched.</strong></p>
 <p><strong>Brief-RC is handled by <code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code>, not
@@ -1182,7 +1182,7 @@ reference distribution matched to each participant’s trial count.</p>
 <span>  threshold <span class="op">=</span> <span class="fl">1.96</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">iv</span></span>
-<span><span class="co"># $data$per_participant has: participant_id, infoval, meaningful</span></span>
+<span><span class="co"># $data$per_participant has: participant_id, infoval, above_threshold</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">iv</span><span class="op">$</span><span class="va">data</span><span class="op">$</span><span class="va">per_participant</span><span class="op">)</span></span></code></pre></div>
 <p>Returned as an <code>rcdiag_result</code>. Status:</p>
 <ul>
@@ -1196,10 +1196,10 @@ reference distribution matched to each participant’s trial count.</p>
 and the <code>above_threshold</code> flag for downstream exclusion.</p>
 <p><code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code> deliberately does
 <strong>not</strong> return a <strong>fail</strong> status based on
-per-participant z alone. The reason is the subject of §6.9.1 below:
-per-producer z is structurally low even on healthy data, so a
-per-participant headcount is a misleading proxy for data quality. Use
-<code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> (§6.9.2) for the real verdict.</p>
+per-participant z alone. As §6.9.1 explains, per-producer z is
+structurally low even on healthy data, so a per-participant headcount
+misclassifies many compliant studies. Use
+<code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> (§6.9.2) for the full verdict.</p>
 </div>
 <div class="section level3">
 <h3 id="why-per-producer-infoval-often-looks-low">6.9.1. Why per-producer infoVal often looks “low”<a class="anchor" aria-label="anchor" href="#why-per-producer-infoval-often-looks-low"></a>
@@ -1207,24 +1207,25 @@ per-participant headcount is a misleading proxy for data quality. Use
 <p>A common moment of confusion in RC analysis is opening
 <code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code>’s output and seeing per-producer
 z below the 1.96 threshold, sometimes negative, even though data
-collection went smoothly. Three things are worth knowing before you
-conclude the data are broken.</p>
+collection went smoothly. A few facts about infoVal are worth knowing
+before concluding the data are broken.</p>
 <p><strong>The published baseline is paradigm- and
-target-dependent.</strong> Brinkman et al. (2019, p. 12) report that on
-2IFC for perceived gender — a strong, consensual target — individual
-infoVals cluster in the 3–4 range, with 54–68% of participants clearing
-1.96 (lab vs. online samples respectively). By contrast, Schmitz et
-al. (2024) applied infoVal to Brief-RC for a social-category target
-(“Chinese-looking face”), with an oval face mask, and reported infoVals
-<strong>below 1.96 in every condition of both experiments</strong>:
-Experiment 1 means were 1.54 (Traditional-RC), 1.93 (Brief-RC12), and
-1.74 (Brief-RC20) (p. 7); Experiment 2 means across comparison criteria
-ranged from 0.69 to 1.22. Their own interpretation (p. 13): <em>“infoVal
-scores were relatively low, regardless of the condition, signalling that
-increasing the number of trials may be beneficial to improve both
-metrics.”</em> So “low individual infoVal” is the normal empirical
-finding for Brief-RC in the only published methodological evaluation of
-it.</p>
+target-dependent.</strong> Brinkman et al. (2019) studied 2IFC for
+perceived gender (a strong, consensual target). Mean per-participant
+infoVal was 3.9 ± 0.4 (lab sample) and 2.9 ± 0.32 (online sample), and
+most participants fell in the 3–4 range; the proportion clearing z =
+1.96 was 68% (lab) and 54% (online) (p. 12, Part III Discussion; General
+Discussion). Schmitz et al. (2024) applied infoVal to Brief-RC for a
+social-category target (“Chinese-looking face”), with an oval face mask,
+and reported infoVals <strong>below 1.96 in every condition of both
+experiments</strong>: Experiment 1 means were 1.54 (Traditional-RC),
+1.93 (Brief-RC12), and 1.74 (Brief-RC20) (p. 7); Experiment 2 means
+across comparison criteria ranged from 0.69 to 1.22. Their own
+interpretation (p. 13): <em>“infoVal scores were relatively low,
+regardless of the condition, signalling that increasing the number of
+trials may be beneficial to improve both metrics.”</em> So “low
+individual infoVal” is the normal empirical finding for Brief-RC in the
+only published methodological evaluation of it.</p>
 <p><strong>There is a known calibration bug for Brief-RC in the original
 rcicr.</strong> <code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> builds its
 random-responder reference distribution at the pool size (number of
@@ -1247,27 +1248,22 @@ matches <code>rcicr</code> numerically.</strong> When
 their reference distributions differ only by a column permutation of the
 noise matrix, and the Frobenius norm is permutation-invariant. Under a
 matched RNG seed they agree to floating-point tolerance. Switching from
-<code>rcicr</code> to this package on a standard 2IFC analysis will not
-change your published numbers — the in-package <code><a href="../reference/infoval.html">infoval()</a></code>
-only departs from <code>rcicr</code> when
-<code>n_trials != n_pool</code> (the Brief-RC calibration gap above) or
-when a <code>mask</code> is supplied.</p>
-<p><strong>Schmitz (2019) L1-vs-L2 and Schmitz (2020) MAD-constant
-critiques do not apply.</strong> Both
-<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> and
-<code><a href="../reference/infoval.html">rcicrdiagnostics::infoval()</a></code> compute the Frobenius (L2) norm
-<code>sqrt(sum(x * x))</code> on the producer’s mask, and both compute
-the reference dispersion via base R <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>, which
-applies the Schmitz (2020) consistency constant <code>1.4826</code> by
-default. The 2019 L1-vs-L2 issue is not present in either
-implementation, and the 2020 “missing constant” complaint was withdrawn
-in the published erratum for exactly this reason. No further patching is
-needed on either side.</p>
+<code>rcicr</code> to this package on a standard 2IFC analysis does not
+change your numbers; the in-package <code><a href="../reference/infoval.html">infoval()</a></code> only departs
+from <code>rcicr</code> when <code>n_trials != n_pool</code> (the
+Brief-RC calibration gap above) or when a <code>mask</code> is
+supplied.</p>
+<p><strong>Norm and dispersion conventions.</strong>
+<code><a href="../reference/infoval.html">infoval()</a></code> computes the Frobenius (L2) norm
+<code>sqrt(sum(x * x))</code> on the producer’s mask and the reference
+dispersion via base R <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>, which applies the
+consistency constant <code>1.4826</code> by default. These choices match
+<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code>.</p>
 <p><strong>Why the simulator’s 50/50 ±1 sampling is correct under
-standard Brief-RC.</strong> A natural first worry on reading the
-simulator is that <code><a href="../reference/infoval.html">infoval()</a></code> draws random responses with
-<code>sample(c(-1, 1), n_trials, replace = TRUE)</code> — a uniform
-50/50 ±1 — when each Brief-RC trial actually involves picking 1 of 12
+standard Brief-RC.</strong> Reading the simulator may raise a worry:
+<code><a href="../reference/infoval.html">infoval()</a></code> draws random responses with
+<code>sample(c(-1, 1), n_trials, replace = TRUE)</code> (a uniform 50/50
+±1) even though each Brief-RC trial involves picking 1 of 12
 alternatives. The 50/50 is exact under the standard Brief-RC trial
 structure (Schmitz et al., 2024, p. 6): each trial shows 6 oriented and
 6 inverted faces, so a random producer picks one of 12 with
@@ -1277,24 +1273,28 @@ distribution of <code>(chosen_stim, response)</code> therefore matches a
 random Brief-RC responder. Designs that depart from a balanced
 oriented/inverted split per trial, or that have trials overlapping on
 the pool in non-standard ways, will see a small calibration drift; for
-the standard 6/6 design — and correspondingly for any other balanced
-split such as 10/10 in Brief-RC 20 — the calibration is exact.</p>
-<p><strong>Group-mean vs. individual z.</strong> The group-mean CI is
-built from N × T decisions across N producers, so its Frobenius norm is
-compared against a correspondingly tighter reference distribution;
-intuitively, noise averages down by √N. The Brinkman and Schmitz papers
-don’t compute a group-mean z directly, but mathematically it will exceed
-the individual-level median, and it is often the more defensible summary
-statistic when individual-level z is noisy.</p>
-<p>One additional interpretation, offered as <em>speculation</em>, not
-as an established finding: negative individual z does not imply
+the standard 6/6 design (and correspondingly for any other balanced
+split, such as 10/10 in Brief-RC 20) the calibration is exact.</p>
+<p><strong>Group-mean vs. individual z.</strong> Neither Brinkman nor
+Schmitz compute a group-mean infoVal z directly; both papers apply
+infoVal at the individual level (Brinkman recommends it as an exclusion
+criterion or as a way to assess how individual CIs weight into a group
+CI). The mathematical extension is straightforward, however: a
+group-mean CI built from N × T decisions across N producers has its
+Frobenius norm compared against a correspondingly tighter reference
+distribution (intuitively, noise averages down by √N), so the group-mean
+z exceeds the individual-level median by construction. We treat that
+group-mean z as a useful aggregate when individual-level z is noisy, but
+flag it as our derivation rather than an established Brinkman
+result.</p>
+<p>One additional interpretation, offered as <em>speculation</em> rather
+than established finding: negative individual z does not imply
 “anti-signal.” InfoVal is direction-agnostic (a z-scored Frobenius norm
 has no sign in pixel space), so a producer responding “opposite” to the
 target would still score positive. Negative z is geometrically
 consistent with a coherent low-rank mask that fills less of the noise
-basis than a random-responder mask does — but neither Brinkman nor
-Schmitz report or test this, so treat it as a hypothesis, not a
-fact.</p>
+basis than a random-responder mask does, but neither Brinkman nor
+Schmitz test this, so treat it as a hypothesis.</p>
 <p>What <code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> automates:</p>
 <ul>
 <li>The per-trial-count reference (fixes the pool-size calibration bug
@@ -1307,11 +1307,11 @@ Schmitz’s geometry.</li>
 </ul>
 <p>What it does <strong>not</strong> automate is the decision about
 whether your individual-level infoVals are high enough to report. That
-depends on your target, paradigm, and trial count, and the published
-baselines from the two papers cited above are the honest yardsticks.</p>
+depends on target, paradigm, and trial count, and the published
+baselines above are the honest yardsticks.</p>
 </div>
 <div class="section level3">
-<h3 id="diagnose_infoval-guided-lownegative-z-diagnostic">6.9.2. <code>diagnose_infoval()</code> — guided low/negative-z
+<h3 id="diagnose_infoval-guided-lownegative-z-diagnostic">6.9.2. <code>diagnose_infoval()</code>: guided low/negative-z
 diagnostic<a class="anchor" aria-label="anchor" href="#diagnose_infoval-guided-lownegative-z-diagnostic"></a>
 </h3>
 <p><code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> is the recommended entry point when
@@ -1385,13 +1385,13 @@ sentence that does not describe what you actually did.</p>
 <h3 id="check_response_inversion">6.10. <code>check_response_inversion()</code><a class="anchor" aria-label="anchor" href="#check_response_inversion"></a>
 </h3>
 <p>Occasionally a whole batch of response data has its
-<code>+1</code>/<code>-1</code> codes systematically flipped — for
+<code>+1</code>/<code>-1</code> codes systematically flipped (for
 example, the export script recorded <em>button number</em> rather than
-<em>chosen face side</em>, and the mapping was reversed. An inverted CI
+<em>chosen face side</em>, with the mapping reversed). An inverted CI
 looks perfectly reasonable but represents the opposite mental content
 from what you meant to measure.</p>
-<p>This check computes infoVal twice — once with the original responses
-and once with every response sign-flipped — and flags participants whose
+<p>This check computes infoVal twice (once with the original responses
+and once with every response sign-flipped) and flags participants whose
 flipped infoVal exceeds the original by at least <code>margin</code>
 (default <code>1.96</code>). Any non-zero count is a strong signal.</p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
@@ -1424,8 +1424,8 @@ genuinely informative.</li>
 <li>
 <strong>A negative correlation</strong> between infoVal and RT
 <em>across</em> participants. If fast responders systematically score
-higher on infoVal, something about the measurement is off — possibly a
-click-pattern artefact.</li>
+higher on infoVal, something about the measurement is off (possibly a
+click-pattern artefact).</li>
 </ol>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cross_validate_rt_infoval.html">cross_validate_rt_infoval</a></span><span class="op">(</span></span>
@@ -1453,8 +1453,8 @@ required columns are present. Use it on your real data file:</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">responses</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/load_responses.html">load_responses</a></span><span class="op">(</span><span class="st">"my_data.csv"</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span></code></pre></div>
 <p>It returns a <code>data.table</code>, which behaves like a regular
-<code>data.frame</code> for the check functions — you don’t need to
-learn a new syntax.</p>
+<code>data.frame</code> for the check functions (no new syntax to
+learn).</p>
 </div>
 </div>
 <div class="section level2">
@@ -1472,7 +1472,7 @@ usually don’t need to set <code>method</code> yourself:</p>
 <span><span class="co"># Auto-detected as "briefrc":</span></span>
 <span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, noise_matrix <span class="op">=</span> <span class="st">"noise_matrix_128.txt"</span><span class="op">)</span></span></code></pre></div>
 <p>Pass <code>method</code> explicitly when you have neither file on
-hand — for example, to sanity-check the response CSV by itself:</p>
+hand (for example, to sanity-check the response CSV by itself):</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span><span class="va">responses</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; == Data-quality report (2ifc) ==</span></span>
@@ -1514,8 +1514,8 @@ and <code>infoval_iter</code>, so does
 <code>infoval_iter</code> → number of iterations for the
 reference-distribution simulation. <strong>Default
 <code>NULL</code></strong>, which means the three infoVal-based checks
-are skipped. Set to e.g. <code>10000</code> to enable them — expect the
-first call to take a few minutes.</li>
+are skipped. Set to e.g. <code>10000</code> to enable them (expect the
+first call to take a few minutes).</li>
 </ul>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span></span>
@@ -1652,17 +1652,17 @@ missing; nothing errors silently and nothing runs halfway.</p>
 <p>Four statuses:</p>
 <ul>
 <li>
-<strong>pass</strong> (green) — the check saw nothing unusual.
+<strong>pass</strong> (green): the check saw nothing unusual.
 Continue.</li>
 <li>
-<strong>warn</strong> (yellow) — something worth investigating but
+<strong>warn</strong> (yellow): something worth investigating but
 not necessarily fatal (e.g. one duplicate row, a known miscoding with a
 suggested fix). Look at <code>$data</code> and decide.</li>
 <li>
-<strong>fail</strong> (red) — something that will corrupt downstream
+<strong>fail</strong> (red): something that will corrupt downstream
 CIs or infoVal if you ignore it. Fix before proceeding.</li>
 <li>
-<strong>skip</strong> (grey) — the check didn’t run because its
+<strong>skip</strong> (grey): the check didn’t run because its
 required inputs weren’t supplied. For example, <code><a href="../reference/check_rt.html">check_rt()</a></code>
 is skipped when <code>col_rt</code> is <code>NULL</code>, and the
 infoVal-based checks are skipped when either <code>rdata</code> or
@@ -1681,8 +1681,8 @@ later).</li>
 <li>Once the basic checks pass, rerun with <code>rdata = ...</code>,
 <code>col_rt = "rt"</code>, and <code>infoval_iter = 10000</code> to
 unlock the infoVal- dependent checks.</li>
-<li>Only when every check is <strong>pass</strong> — or a consciously
-accepted <strong>warn</strong> — move on to
+<li>Only when every check is <strong>pass</strong> (or a consciously
+accepted <strong>warn</strong>), move on to
 <code><a href="https://rdrr.io/pkg/rcicr/man/generateCI2IFC.html" class="external-link">rcicr::generateCI2IFC()</a></code> (2IFC) or your Brief-RC CI
 code.</li>
 </ol>
@@ -1702,12 +1702,12 @@ downstream analysis.</p>
 <p>When <code><a href="https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html" class="external-link">rcicr::batchGenerateCI2IFC()</a></code> (or
 <code>generateCI2IFC()</code>) computes a CI, the underlying math
 produces a two-dimensional pixel array whose values are typically
-centered near zero and span a small range — often between roughly
+centered near zero and span a small range (often between roughly
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>−</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">-0.01</annotation></semantics></math>
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>+</mo><mn>0.01</mn></mrow><annotation encoding="application/x-tex">+0.01</annotation></semantics></math>,
-depending on signal strength and number of trials. These numbers are the
-real signal: they encode how much each pixel contributes to the
+depending on signal strength and number of trials). These numbers are
+the real signal: they encode how much each pixel contributes to the
 participant’s mental image.</p>
 <p>They cannot, however, be displayed as-is. Monitors render pixel
 intensities between 0 (black) and 1 (white); negative values have no
@@ -1717,11 +1717,10 @@ into a range suitable for rendering. Every CI that <code>rcicr</code>
 returns therefore contains two parallel fields:</p>
 <ul>
 <li>
-<strong><code>ci$ci</code></strong> — the <em>raw</em> CI, exactly
-as produced by the weighted sum of noise patterns. This is your
-data.</li>
+<strong><code>ci$ci</code></strong>: the <em>raw</em> CI, exactly as
+produced by the weighted sum of noise patterns. This is your data.</li>
 <li>
-<strong><code>ci$scaled</code></strong> — the <em>rescaled</em> CI,
+<strong><code>ci$scaled</code></strong>: the <em>rescaled</em> CI,
 produced by applying one of the transformations below. This is what gets
 saved as a PNG or combined with the base image for display.</li>
 </ul>
@@ -1785,8 +1784,8 @@ rating-task stimuli that should blend with the base face.</td>
 <td>Batch-level variant of <code>independent</code>: computes one shared
 constant from the widest-range CI across all CIs produced in the same
 call.</td>
-<td>Sets of CIs that will be viewed side by side — for example,
-group-level CIs per condition.</td>
+<td>Sets of CIs that will be viewed side by side (for example,
+group-level CIs per condition).</td>
 </tr>
 </tbody>
 </table>
@@ -1840,8 +1839,8 @@ CI-specific rescalings, which distort correlations.</td>
 discriminability ratio in Brinkman et al., 2019)</td>
 <td>Use <code>ci$ci</code>
 </td>
-<td>Same reasoning — CI-dependent rescalings change distances
-non-uniformly.</td>
+<td>Same reasoning (CI-dependent rescalings change distances
+non-uniformly).</td>
 </tr>
 <tr class="even">
 <td><strong>Producing CIs for a trait-ratings task</strong></td>
@@ -1906,9 +1905,9 @@ necessarily comparable: <code>batchGenerateCI2IFC()</code> defaults to
 your methods section.</p></li>
 <li><p><strong>Believing that scaling affects infoVal.</strong> It does
 not. <code>computeInfoVal2IFC()</code> always reads the raw CI. If two
-analyses give different infoVal values, the cause is elsewhere — in the
+analyses give different infoVal values, the cause is elsewhere (in the
 response data, in the reference-distribution cache, or in the trial
-count — not in scaling. See Section 6.9 for the details.</p></li>
+count), not in scaling. See Section 6.9 for the details.</p></li>
 <li><p><strong>Applying <code><a href="https://rdrr.io/r/base/norm.html" class="external-link">norm()</a></code> or
 <code>sqrt(sum(x^2))</code> to <code>ci$scaled</code>.</strong> When
 reimplementing any CI-based statistic by hand, operate on
@@ -2014,7 +2013,7 @@ from R via <code>citation("rcicrdiagnostics")</code>.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>M. Oliveira, 2026</p>
+  <p>Manuel Oliveira, 2026</p>
 </div>
 
 <div class="pkgdown-footer-right">
