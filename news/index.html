@@ -65,7 +65,7 @@
 <div class="section level3">
 <h3 id="behavior-changes-0-2-0">Behavior changes<a class="anchor" aria-label="anchor" href="#behavior-changes-0-2-0"></a></h3>
 <ul><li>
-<code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code> no longer fails on a per-participant headcount of <code>z &gt;= 1.96</code>. Status now returns <code>pass</code> when the median individual z is positive, <code>warn</code> otherwise. Per the published record (Brinkman 2019: median 3-4 on 2IFC gender; Schmitz 2024: Brief-RC systematically below 1.96), individual infoVal magnitudes are paradigm- and target-dependent, so a fail status from a headcount alone misclassifies many compliant studies.</li>
+<code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code> no longer fails on a per-participant headcount of <code>z &gt;= 1.96</code>. Status now returns <code>pass</code> when the median individual z is positive, <code>warn</code> otherwise. Per the published record (Brinkman 2019: mean ~3-4 on 2IFC gender; Schmitz 2024: Brief-RC systematically below 1.96), individual infoVal magnitudes are paradigm- and target-dependent, so a fail status from a headcount alone misclassifies many compliant studies.</li>
 <li>The <code>data$per_participant$meaningful</code> column produced by <code><a href="../reference/compute_infoval_summary.html">compute_infoval_summary()</a></code> is renamed to <code>above_threshold</code>. Code that reads the old column name will break and needs the rename.</li>
 </ul></div>
 <div class="section level3">

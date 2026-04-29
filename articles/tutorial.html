@@ -416,9 +416,11 @@ path when
 items are drawn at random, possibly with repetition, when the task
 requires more presentations than the pool can supply uniquely. A
 producer can therefore choose the same pool item on two different
-trials, possibly with the same response sign or the opposite. Schmitz et
-al. (2024) Experiment 2 was in this regime: Brief-RC 12 had 250 trials ×
-12 = 3000 presentations against a 2000-item pool.</p></li>
+trials, possibly with the same response sign or the opposite. Example:
+300 trials × 12 alternatives = 3600 presentations drawn from a 1500-item
+pool. (Schmitz et al. (2024) do not explicitly report using this regime;
+both their experiments fit the no-display-repeats reading at the
+noisy-face level.)</p></li>
 <li><p><strong>Hybrid designs</strong> (e.g., partial blocks, Latin
 squares, counterbalanced subsets per condition). Treat these as
 with-replacement at the analysis level unless your design guarantees no
@@ -463,14 +465,14 @@ vs. <code>n_trials</code>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Without replacement (Exp 1 style)</td>
+<td>Without replacement</td>
 <td>No duplicate <code>stimulus</code> ids per producer</td>
 <td>Equal</td>
 <td>Sample stim ids without replacement when simulating random
 producers</td>
 </tr>
 <tr class="even">
-<td>With replacement (Exp 2 style)</td>
+<td>With replacement</td>
 <td>Duplicates possible</td>
 <td>Less than or equal</td>
 <td>Sample stim ids with replacement when simulating random
@@ -1219,8 +1221,10 @@ Discussion). Schmitz et al. (2024) applied infoVal to Brief-RC for a
 social-category target (“Chinese-looking face”), with an oval face mask,
 and reported infoVals <strong>below 1.96 in every condition of both
 experiments</strong>: Experiment 1 means were 1.54 (Traditional-RC),
-1.93 (Brief-RC12), and 1.74 (Brief-RC20) (p. 7); Experiment 2 means
-across comparison criteria ranged from 0.69 to 1.22. Their own
+1.93 (Brief-RC12), and 1.74 (Brief-RC20) (p. 7). Experiment 2 reported
+per-condition means across time, trial-count, and stimulus-count
+criteria; all were below 1.96, ranging from 0.54 (Traditional-RC at 90
+trials) to 1.35 (Brief-RC pooled at 10 min) (pp. 11–12). Their own
 interpretation (p. 13): <em>“infoVal scores were relatively low,
 regardless of the condition, signalling that increasing the number of
 trials may be beneficial to improve both metrics.”</em> So “low
