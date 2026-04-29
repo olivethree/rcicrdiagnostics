@@ -118,10 +118,8 @@ report:
 
 ## Documentation
 
-Full function reference: <https://olivethree.github.io/rcicrdiagnostics/>
-
-Pipeline-specific quickstarts (`quickstart-2ifc`, `quickstart-briefrc`)
-are planned once the CI-generation–dependent checks land.
+Function reference (one help page per exported function):
+<https://olivethree.github.io/rcicrdiagnostics/reference/>
 
 ## Citation
 
