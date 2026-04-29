@@ -1817,11 +1817,14 @@ affects only the second.</p>
 <tbody>
 <tr class="odd">
 <td><strong>Computing infoVal</strong></td>
-<td>Any scaling</td>
-<td>
-<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> operates on
-<code>ci$ci</code> internally. The <code>scaling</code> argument has no
-effect on the returned <em>z</em>-score.</td>
+<td>Use <code>ci$ci</code> (the <code>scaling</code> argument at CI
+generation is irrelevant)</td>
+<td>infoVal must be computed from the raw CI.
+<code><a href="https://rdrr.io/pkg/rcicr/man/computeInfoVal2IFC.html" class="external-link">rcicr::computeInfoVal2IFC()</a></code> reads <code>ci$ci</code>
+internally regardless of which <code>scaling</code> was passed at CI
+generation, so the <code>scaling</code> choice does not affect the
+returned <em>z</em>-score. Do not pass <code>ci$scaled</code> to a
+hand-rolled infoVal computation.</td>
 </tr>
 <tr class="even">
 <td>
