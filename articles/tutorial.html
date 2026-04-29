@@ -1632,16 +1632,23 @@ file paths to point at your own copies of the data files.</p>
 </h3>
 <p>The original CSV is semicolon-separated with columns
 <code>subject</code>, <code>trial</code>, <code>stimulus</code>,
-<code>response</code>, <code>trait</code>. Rename to the package’s
-defaults and lower-case the trait labels:</p>
+<code>response</code>, <code>trait</code>. Read it with
+<code>readr</code> and clean it up with <code>dplyr</code>: rename
+<code>subject</code> to the column name the package expects, make sure
+participant ids are stored as text, and lower-case the trait labels for
+consistency.</p>
 <div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://r-datatable.com" class="external-link">data.table</a></span><span class="op">)</span></span>
-<span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/data.table/man/fread.html" class="external-link">fread</a></span><span class="op">(</span><span class="st">"study1data.csv"</span>, sep <span class="op">=</span> <span class="st">";"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/data.table/man/setattr.html" class="external-link">setnames</a></span><span class="op">(</span><span class="va">raw</span>,</span>
-<span>         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"subject"</span>, <span class="st">"trial"</span>, <span class="st">"stimulus"</span>, <span class="st">"response"</span>, <span class="st">"trait"</span><span class="op">)</span>,</span>
-<span>         <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"participant_id"</span>, <span class="st">"trial"</span>, <span class="st">"stimulus"</span>, <span class="st">"response"</span>, <span class="st">"trait"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">raw</span><span class="op">[</span>, <span class="va">participant_id</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">participant_id</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="va">raw</span><span class="op">[</span>, <span class="va">trait</span> <span class="op">:=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">trait</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://readr.tidyverse.org" class="external-link">readr</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">raw</span> <span class="op">&lt;-</span> <span class="fu">read_csv2</span><span class="op">(</span><span class="st">"study1data.csv"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html" class="external-link">rename</a></span><span class="op">(</span>participant_id <span class="op">=</span> <span class="va">subject</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    participant_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">participant_id</span><span class="op">)</span>,</span>
+<span>    trait          <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/chartr.html" class="external-link">tolower</a></span><span class="op">(</span><span class="va">trait</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">raw</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="modernising-legacy-rcicr-0-3-0-rdata">9.2. Modernising legacy rcicr 0.3.0 rdata<a class="anchor" aria-label="anchor" href="#modernising-legacy-rcicr-0-3-0-rdata"></a>
@@ -1649,24 +1656,32 @@ defaults and lower-case the trait labels:</p>
 <p>The 2015 rdata file stores its noise basis under
 <code>s$sinusoids</code> and <code>s$sinIdx</code>, whereas the current
 package expects the <code>p$patches</code> / <code>p$patchIdx</code>
-schema introduced in <code>rcicr</code> 1.0.x. The two-line aliasing
-below makes a legacy rdata file work with the package without re-running
-stimulus generation:</p>
+schema introduced in <code>rcicr</code> 1.0.x. To make the legacy file
+work without re-running stimulus generation, load it, copy the old
+fields into a new <code>p</code> list, and save the result under a new
+filename:</p>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">e</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">new.env</a></span><span class="op">(</span>parent <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/environment.html" class="external-link">emptyenv</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"rcic_seed_1_time_fev_05_2015_03_17.Rdata"</span>, envir <span class="op">=</span> <span class="va">e</span><span class="op">)</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="st">"p"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">&amp;&amp;</span> <span class="st">"s"</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">e</span><span class="op">$</span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>patches    <span class="op">=</span> <span class="va">e</span><span class="op">$</span><span class="va">s</span><span class="op">$</span><span class="va">sinusoids</span>,</span>
-<span>              patchIdx   <span class="op">=</span> <span class="va">e</span><span class="op">$</span><span class="va">s</span><span class="op">$</span><span class="va">sinIdx</span>,</span>
-<span>              noise_type <span class="op">=</span> <span class="st">"sinusoid"</span><span class="op">)</span></span>
-<span><span class="op">}</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span>list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="va">e</span><span class="op">)</span>, file <span class="op">=</span> <span class="st">"stimuli_modernised.RData"</span>, envir <span class="op">=</span> <span class="va">e</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/load.html" class="external-link">load</a></span><span class="op">(</span><span class="st">"rcic_seed_1_time_fev_05_2015_03_17.Rdata"</span><span class="op">)</span>  <span class="co"># brings in s, base_faces, etc.</span></span>
+<span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  patches    <span class="op">=</span> <span class="va">s</span><span class="op">$</span><span class="va">sinusoids</span>,</span>
+<span>  patchIdx   <span class="op">=</span> <span class="va">s</span><span class="op">$</span><span class="va">sinIdx</span>,</span>
+<span>  noise_type <span class="op">=</span> <span class="st">"sinusoid"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span>list <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ls.html" class="external-link">ls</a></span><span class="op">(</span><span class="op">)</span>, file <span class="op">=</span> <span class="st">"stimuli_modernised.RData"</span><span class="op">)</span></span></code></pre></div>
+<p>The new <code>stimuli_modernised.RData</code> is what we pass to the
+diagnostics below.</p>
 </div>
 <div class="section level3">
 <h3 id="running-the-diagnostic-battery">9.3. Running the diagnostic battery<a class="anchor" aria-label="anchor" href="#running-the-diagnostic-battery"></a>
 </h3>
+<p>Pick the columns the package needs and call
+<code><a href="../reference/run_diagnostics.html">run_diagnostics()</a></code>:</p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">resp_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">raw</span><span class="op">[</span>, <span class="fu">.</span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">resp_df</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span></span>
+<span></span>
 <span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/run_diagnostics.html">run_diagnostics</a></span><span class="op">(</span></span>
 <span>  <span class="va">resp_df</span>,</span>
 <span>  method     <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
@@ -1726,19 +1741,29 @@ basic data mechanics are clean.</p>
 <div class="section level3">
 <h3 id="per-trait-response-bias">9.4. Per-trait response bias<a class="anchor" aria-label="anchor" href="#per-trait-response-bias"></a>
 </h3>
-<p>If your design crosses multiple within-subject conditions, run
-<code><a href="../reference/check_response_bias.html">check_response_bias()</a></code> separately per condition. A producer
-who is balanced overall might still be heavily biased in one trait
-condition:</p>
+<p>If your design crosses multiple within-subject conditions, it is
+worth running <code><a href="../reference/check_response_bias.html">check_response_bias()</a></code> separately per
+condition: a producer who looks balanced overall might still be heavily
+biased in one trait. Filter the data down to one trait and check it:</p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">trait_bias</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="kw">function</span><span class="op">(</span><span class="va">tr</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">raw</span><span class="op">[</span><span class="va">trait</span> <span class="op">==</span> <span class="va">tr</span>, <span class="fu">.</span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="../reference/check_response_bias.html">check_response_bias</a></span><span class="op">(</span><span class="va">sub</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trait_bias</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">competent_data</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trait</span> <span class="op">==</span> <span class="st">"competent"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/check_response_bias.html">check_response_bias</a></span><span class="op">(</span><span class="va">competent_data</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span></code></pre></div>
+<p>To check all ten traits, repeat the same recipe per trait. The most
+direct way is a <code>for</code> loop:</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">trait_bias</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">tr</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sub</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trait</span> <span class="op">==</span> <span class="va">tr</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">trait_bias</span><span class="op">[[</span><span class="va">tr</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/check_response_bias.html">check_response_bias</a></span><span class="op">(</span><span class="va">sub</span>, method <span class="op">=</span> <span class="st">"2ifc"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
 <span><span class="va">trait_bias</span><span class="op">[[</span><span class="st">"competent"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <p>For this dataset all ten trait conditions return PASS.</p>
 </div>
@@ -1746,24 +1771,42 @@ condition:</p>
 <h3 id="infoval-per-trait-condition">9.5. InfoVal per trait condition<a class="anchor" aria-label="anchor" href="#infoval-per-trait-condition"></a>
 </h3>
 <p><code><a href="../reference/diagnose_infoval.html">diagnose_infoval()</a></code> runs the full six-step protocol from
-§6.9 against one trait condition at a time. For multi-condition studies,
-loop and share the modernised rdata across calls:</p>
-<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">trait_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  <span class="kw">function</span><span class="op">(</span><span class="va">tr</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">sub</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">raw</span><span class="op">[</span><span class="va">trait</span> <span class="op">==</span> <span class="va">tr</span>, <span class="fu">.</span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="../reference/diagnose_infoval.html">diagnose_infoval</a></span><span class="op">(</span></span>
-<span>      <span class="va">sub</span>,</span>
-<span>      method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
-<span>      rdata     <span class="op">=</span> <span class="st">"stimuli_modernised.RData"</span>,</span>
-<span>      iter      <span class="op">=</span> <span class="fl">1000</span>,</span>
-<span>      face_mask <span class="op">=</span> <span class="st">"FMNES_mask_fullface_256.jpg"</span>,  <span class="co"># or "auto" for the default oval</span></span>
-<span>      seed      <span class="op">=</span> <span class="fl">1L</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
+§6.9 on one trait condition at a time. Start with a single trait so you
+know what the call looks like:</p>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">competent_data</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trait</span> <span class="op">==</span> <span class="st">"competent"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">competent_iv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnose_infoval.html">diagnose_infoval</a></span><span class="op">(</span></span>
+<span>  <span class="va">competent_data</span>,</span>
+<span>  method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
+<span>  rdata     <span class="op">=</span> <span class="st">"stimuli_modernised.RData"</span>,</span>
+<span>  iter      <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  face_mask <span class="op">=</span> <span class="st">"FMNES_mask_fullface_256.jpg"</span>,  <span class="co"># or "auto" for the default oval</span></span>
+<span>  seed      <span class="op">=</span> <span class="fl">1L</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">trait_results</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span></span>
+<span><span class="va">competent_iv</span></span></code></pre></div>
+<p>To run all ten traits, wrap the same call in a <code>for</code> loop
+and store each result in a named list:</p>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">trait_results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">tr</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/sort.html" class="external-link">sort</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">raw</span><span class="op">$</span><span class="va">trait</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">sub</span> <span class="op">&lt;-</span> <span class="va">raw</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">trait</span> <span class="op">==</span> <span class="va">tr</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">participant_id</span>, <span class="va">stimulus</span>, <span class="va">response</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">trait_results</span><span class="op">[[</span><span class="va">tr</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnose_infoval.html">diagnose_infoval</a></span><span class="op">(</span></span>
+<span>    <span class="va">sub</span>,</span>
+<span>    method    <span class="op">=</span> <span class="st">"2ifc"</span>,</span>
+<span>    rdata     <span class="op">=</span> <span class="st">"stimuli_modernised.RData"</span>,</span>
+<span>    iter      <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>    face_mask <span class="op">=</span> <span class="st">"FMNES_mask_fullface_256.jpg"</span>,</span>
+<span>    seed      <span class="op">=</span> <span class="fl">1L</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
 <p>The headline numbers for the ten trait conditions of Study 1, masked
 with the FMNES full-face mask (38,480 / 65,536 in-mask pixels;
 approximately 58.7% of the image):</p>
@@ -2141,7 +2184,7 @@ distances, effect sizes, pixel tests): compute from <code>ci$ci</code>,
 regardless of the scaling argument passed.</li>
 </ul>
 <p>A concrete workflow for a typical 2IFC study:</p>
-<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. Generate CIs with autoscale for a visually-comparable set of</span></span>
 <span><span class="co">#    images (useful for rating-task stimuli or figure panels).</span></span>
 <span><span class="va">cis</span> <span class="op">&lt;-</span> <span class="fu">rcicr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/rcicr/man/batchGenerateCI2IFC.html" class="external-link">batchGenerateCI2IFC</a></span><span class="op">(</span></span>
