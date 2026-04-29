@@ -1283,7 +1283,7 @@ The table below expands this into typical use cases.
 
 | Your goal | Correct choice | Reasoning |
 |---|---|---|
-| **Computing infoVal** | Any scaling | `rcicr::computeInfoVal2IFC()` operates on `ci$ci` internally. The `scaling` argument has no effect on the returned *z*-score. |
+| **Computing infoVal** | Use `ci$ci` (the `scaling` argument at CI generation is irrelevant) | infoVal must be computed from the raw CI. `rcicr::computeInfoVal2IFC()` reads `ci$ci` internally regardless of which `scaling` was passed at CI generation, so the `scaling` choice does not affect the returned *z*-score. Do not pass `ci$scaled` to a hand-rolled infoVal computation. |
 | **Pixel-wise correlations between CIs** (similarity) | Use `ci$ci` | Pearson correlation is preserved only under *uniform* linear rescalings. `independent` and `matched` apply CI-specific rescalings, which distort correlations. |
 | **Euclidean distance between CIs** (e.g., the objective discriminability ratio in Brinkman et al., 2019) | Use `ci$ci` | Same reasoning (CI-dependent rescalings change distances non-uniformly). |
 | **Producing CIs for a trait-ratings task** | `autoscale` (group of CIs viewed together) or `constant` with fixed $c$ (across-study consistency) | Raters should perceive genuine signal differences across CIs. `independent` defeats this because every CI is stretched to the same display range; a weak-signal CI looks as intense as a strong-signal CI. |
