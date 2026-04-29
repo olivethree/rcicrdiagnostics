@@ -116,13 +116,16 @@ a design decision and \code{with_replacement} controls it.
 }
 
 \code{with_replacement = "auto"} resolves to \code{n_trials > n_pool}, which
-matches the standard Brief-RC convention (Schmitz et al., 2024 used
-without replacement when \code{n_trials * stim_per_trial <= pool_size},
-with replacement otherwise). Override this only when you know your
-design departs from the convention. Whichever choice you make, the
-observed-mask side already handles duplicate chosen stimuli
-correctly because the genMask collapse rule averages duplicates by
-\code{stim} id before the matrix multiplication.
+matches the typical Brief-RC convention of without-replacement
+presentation when the pool is large enough to fill the task
+(Schmitz et al., 2024 do not explicitly characterize their two
+experiments under this label, but their Experiment 1 design is
+consistent with it: 60 trials x 12 alternatives = 720 = pool of 720
+noisy faces). Override this only when you know your design departs
+from the convention. Whichever choice you make, the observed-mask
+side already handles duplicate chosen stimuli correctly because
+the genMask collapse rule averages duplicates by \code{stim} id before
+the matrix multiplication.
 
 For 2IFC, \code{n_trials == n_pool} by definition, both branches of the
 heuristic resolve to without-replacement, and the question does not
@@ -147,16 +150,16 @@ Dotsch, R., & Aarts, H. (2019). Quantifying the informational value
 of classification images. \emph{Behavior Research Methods}, 51(5),
 2059-2073. \doi{10.3758/s13428-019-01232-2}
 
-Schmitz, M., Muller, D., & Yzerbyt, V. (2019). Comment on
+Schmitz, M., Rougier, M., & Yzerbyt, V. (2020). Comment on
 "Quantifying the informational value of classification images": A
-miscomputation of the infoVal metric. \emph{Behavior Research Methods}.
-\doi{10.3758/s13428-019-01295-1}
+miscomputation of the infoVal metric. \emph{Behavior Research Methods},
+52(3), 1383-1386. \doi{10.3758/s13428-019-01295-1}
 
-Schmitz, M., Muller, D., & Yzerbyt, V. (2020). Erratum to: Comment
-on "Quantifying the informational value of classification images":
-Miscomputation of infoVal metric was a minor issue and is now
-corrected. \emph{Behavior Research Methods}, 52, 1800-1801.
-\doi{10.3758/s13428-020-01367-7}
+Schmitz, M., Rougier, M., Yzerbyt, V., Brinkman, L., & Dotsch, R.
+(2020). Erratum to: Comment on "Quantifying the informational value
+of classification images": Miscomputation of infoVal metric was a
+minor issue and is now corrected. \emph{Behavior Research Methods},
+52(4), 1800-1801. \doi{10.3758/s13428-020-01367-7}
 
 Schmitz, M., Rougier, M., & Yzerbyt, V. (2024). Introducing the
 brief reverse correlation: an improved tool to assess visual

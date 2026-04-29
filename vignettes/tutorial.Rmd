@@ -270,9 +270,11 @@ paradigm itself. Three regimes are common.
     drawn at random, possibly with repetition, when the task requires
     more presentations than the pool can supply uniquely. A producer
     can therefore choose the same pool item on two different trials,
-    possibly with the same response sign or the opposite. Schmitz et
-    al. (2024) Experiment 2 was in this regime: Brief-RC 12 had 250
-    trials × 12 = 3000 presentations against a 2000-item pool.
+    possibly with the same response sign or the opposite. Example:
+    300 trials × 12 alternatives = 3600 presentations drawn from a
+    1500-item pool. (Schmitz et al. (2024) do not explicitly report
+    using this regime; both their experiments fit the
+    no-display-repeats reading at the noisy-face level.)
 
 3.  **Hybrid designs** (e.g., partial blocks, Latin squares,
     counterbalanced subsets per condition). Treat these as
@@ -299,8 +301,8 @@ distribution; here we record only the implication for sampling):
 
 | Sampling regime | Producer's data |  `length(unique(chosen_stimuli))` vs. `n_trials` | InfoVal reference distribution |
 | --- | --- | --- | --- |
-| Without replacement (Exp 1 style) | No duplicate `stimulus` ids per producer | Equal | Sample stim ids without replacement when simulating random producers |
-| With replacement (Exp 2 style) | Duplicates possible | Less than or equal | Sample stim ids with replacement when simulating random producers |
+| Without replacement | No duplicate `stimulus` ids per producer | Equal | Sample stim ids without replacement when simulating random producers |
+| With replacement | Duplicates possible | Less than or equal | Sample stim ids with replacement when simulating random producers |
 
 `infoval()` picks the right reference-distribution sampling
 regime automatically: it samples without replacement when the
@@ -857,9 +859,11 @@ et al. (2024) applied infoVal to Brief-RC for a social-category
 target ("Chinese-looking face"), with an oval face mask, and
 reported infoVals **below 1.96 in every condition of both
 experiments**: Experiment 1 means were 1.54 (Traditional-RC), 1.93
-(Brief-RC12), and 1.74 (Brief-RC20) (p. 7); Experiment 2 means
-across comparison criteria ranged from 0.69 to 1.22. Their own
-interpretation (p. 13): *"infoVal scores were relatively low,
+(Brief-RC12), and 1.74 (Brief-RC20) (p. 7). Experiment 2 reported
+per-condition means across time, trial-count, and stimulus-count
+criteria; all were below 1.96, ranging from 0.54 (Traditional-RC
+at 90 trials) to 1.35 (Brief-RC pooled at 10 min) (pp. 11–12).
+Their own interpretation (p. 13): *"infoVal scores were relatively low,
 regardless of the condition, signalling that increasing the number
 of trials may be beneficial to improve both metrics."* So "low
 individual infoVal" is the normal empirical finding for Brief-RC in

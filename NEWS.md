@@ -56,7 +56,7 @@
 * `compute_infoval_summary()` no longer fails on a per-participant
   headcount of `z >= 1.96`. Status now returns `pass` when the median
   individual z is positive, `warn` otherwise. Per the published
-  record (Brinkman 2019: median 3-4 on 2IFC gender; Schmitz 2024:
+  record (Brinkman 2019: mean ~3-4 on 2IFC gender; Schmitz 2024:
   Brief-RC systematically below 1.96), individual infoVal magnitudes
   are paradigm- and target-dependent, so a fail status from a
   headcount alone misclassifies many compliant studies.
