@@ -1193,42 +1193,57 @@ file paths to point at your own copies of the data files.
 ### 9.1. Loading the response data
 
 The original CSV is semicolon-separated with columns `subject`,
-`trial`, `stimulus`, `response`, `trait`. Rename to the package's
-defaults and lower-case the trait labels:
+`trial`, `stimulus`, `response`, `trait`. Read it with `readr` and
+clean it up with `dplyr`: rename `subject` to the column name the
+package expects, make sure participant ids are stored as text, and
+lower-case the trait labels for consistency.
 
 ```{r oliveira-load, eval = FALSE}
-library(data.table)
-raw <- fread("study1data.csv", sep = ";")
-setnames(raw,
-         c("subject", "trial", "stimulus", "response", "trait"),
-         c("participant_id", "trial", "stimulus", "response", "trait"))
-raw[, participant_id := as.character(participant_id)]
-raw[, trait := tolower(trait)]
+library(readr)
+library(dplyr)
+
+raw <- read_csv2("study1data.csv") |>
+  rename(participant_id = subject) |>
+  mutate(
+    participant_id = as.character(participant_id),
+    trait          = tolower(trait)
+  )
+
+head(raw)
 ```
 
 ### 9.2. Modernising legacy rcicr 0.3.0 rdata
 
 The 2015 rdata file stores its noise basis under `s$sinusoids` and
 `s$sinIdx`, whereas the current package expects the `p$patches` /
-`p$patchIdx` schema introduced in `rcicr` 1.0.x. The two-line
-aliasing below makes a legacy rdata file work with the package
-without re-running stimulus generation:
+`p$patchIdx` schema introduced in `rcicr` 1.0.x. To make the legacy
+file work without re-running stimulus generation, load it, copy the
+old fields into a new `p` list, and save the result under a new
+filename:
 
 ```{r oliveira-modernise, eval = FALSE}
-e <- new.env(parent = emptyenv())
-load("rcic_seed_1_time_fev_05_2015_03_17.Rdata", envir = e)
-if (!"p" %in% ls(e) && "s" %in% ls(e)) {
-  e$p <- list(patches    = e$s$sinusoids,
-              patchIdx   = e$s$sinIdx,
-              noise_type = "sinusoid")
-}
-save(list = ls(e), file = "stimuli_modernised.RData", envir = e)
+load("rcic_seed_1_time_fev_05_2015_03_17.Rdata")  # brings in s, base_faces, etc.
+
+p <- list(
+  patches    = s$sinusoids,
+  patchIdx   = s$sinIdx,
+  noise_type = "sinusoid"
+)
+
+save(list = ls(), file = "stimuli_modernised.RData")
 ```
+
+The new `stimuli_modernised.RData` is what we pass to the diagnostics
+below.
 
 ### 9.3. Running the diagnostic battery
 
+Pick the columns the package needs and call `run_diagnostics()`:
+
 ```{r oliveira-checks, eval = FALSE}
-resp_df <- as.data.frame(raw[, .(participant_id, stimulus, response)])
+resp_df <- raw |>
+  select(participant_id, stimulus, response)
+
 report <- run_diagnostics(
   resp_df,
   method     = "2ifc",
@@ -1255,19 +1270,33 @@ mechanics are clean.
 
 ### 9.4. Per-trait response bias
 
-If your design crosses multiple within-subject conditions, run
-`check_response_bias()` separately per condition. A producer who is
-balanced overall might still be heavily biased in one trait condition:
+If your design crosses multiple within-subject conditions, it is worth
+running `check_response_bias()` separately per condition: a producer
+who looks balanced overall might still be heavily biased in one trait.
+Filter the data down to one trait and check it:
 
-```{r oliveira-trait-bias, eval = FALSE}
-trait_bias <- lapply(
-  sort(unique(raw$trait)),
-  function(tr) {
-    sub <- as.data.frame(raw[trait == tr, .(participant_id, stimulus, response)])
-    check_response_bias(sub, method = "2ifc")
-  }
-)
-names(trait_bias) <- sort(unique(raw$trait))
+```{r oliveira-trait-bias-one, eval = FALSE}
+competent_data <- raw |>
+  filter(trait == "competent") |>
+  select(participant_id, stimulus, response)
+
+check_response_bias(competent_data, method = "2ifc")
+```
+
+To check all ten traits, repeat the same recipe per trait. The most
+direct way is a `for` loop:
+
+```{r oliveira-trait-bias-loop, eval = FALSE}
+trait_bias <- list()
+
+for (tr in sort(unique(raw$trait))) {
+  sub <- raw |>
+    filter(trait == tr) |>
+    select(participant_id, stimulus, response)
+
+  trait_bias[[tr]] <- check_response_bias(sub, method = "2ifc")
+}
+
 trait_bias[["competent"]]
 ```
 
@@ -1275,26 +1304,47 @@ For this dataset all ten trait conditions return PASS.
 
 ### 9.5. InfoVal per trait condition
 
-`diagnose_infoval()` runs the full six-step protocol from §6.9 against
-one trait condition at a time. For multi-condition studies, loop and
-share the modernised rdata across calls:
+`diagnose_infoval()` runs the full six-step protocol from §6.9 on one
+trait condition at a time. Start with a single trait so you know what
+the call looks like:
 
-```{r oliveira-infoval, eval = FALSE}
-trait_results <- lapply(
-  sort(unique(raw$trait)),
-  function(tr) {
-    sub <- as.data.frame(raw[trait == tr, .(participant_id, stimulus, response)])
-    diagnose_infoval(
-      sub,
-      method    = "2ifc",
-      rdata     = "stimuli_modernised.RData",
-      iter      = 1000,
-      face_mask = "FMNES_mask_fullface_256.jpg",  # or "auto" for the default oval
-      seed      = 1L
-    )
-  }
+```{r oliveira-infoval-one, eval = FALSE}
+competent_data <- raw |>
+  filter(trait == "competent") |>
+  select(participant_id, stimulus, response)
+
+competent_iv <- diagnose_infoval(
+  competent_data,
+  method    = "2ifc",
+  rdata     = "stimuli_modernised.RData",
+  iter      = 1000,
+  face_mask = "FMNES_mask_fullface_256.jpg",  # or "auto" for the default oval
+  seed      = 1L
 )
-names(trait_results) <- sort(unique(raw$trait))
+
+competent_iv
+```
+
+To run all ten traits, wrap the same call in a `for` loop and store
+each result in a named list:
+
+```{r oliveira-infoval-loop, eval = FALSE}
+trait_results <- list()
+
+for (tr in sort(unique(raw$trait))) {
+  sub <- raw |>
+    filter(trait == tr) |>
+    select(participant_id, stimulus, response)
+
+  trait_results[[tr]] <- diagnose_infoval(
+    sub,
+    method    = "2ifc",
+    rdata     = "stimuli_modernised.RData",
+    iter      = 1000,
+    face_mask = "FMNES_mask_fullface_256.jpg",
+    seed      = 1L
+  )
+}
 ```
 
 The headline numbers for the ten trait conditions of Study 1, masked
